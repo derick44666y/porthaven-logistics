@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
+import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
 import StatusBadge from '@/components/StatusBadge'
 import ModeIcon from '@/components/ModeIcon'
 
@@ -8,7 +8,7 @@ function formatDate(iso: string) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'shipments' | 'create' | 'event' | 'edit'>('shipments')
+  const [tab, setTab] = useState<'shipments' | 'create' | 'event' | 'edit' | 'customer'>('shipments')
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [search, setSearch] = useState('')
   const [success, setSuccess] = useState('')
@@ -24,6 +24,8 @@ export default function AdminPage() {
   })
   const [createdShipment, setCreatedShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
+  const [newCustomer, setNewCustomer] = useState({ name: '', email: '', password: '' })
+  const [createdCustomer, setCreatedCustomer] = useState<{ email: string; password: string; name: string } | null>(null)
 
   // Location autocomplete
   const [locationSuggestions, setLocationSuggestions] = useState<Location[]>([])
@@ -126,10 +128,36 @@ export default function AdminPage() {
     }
   }
 
+  function generateTempPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+    let pwd = ''
+    for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)]
+    setNewCustomer(p => ({ ...p, password: pwd }))
+  }
+
+  async function handleCreateCustomer(e: FormEvent) {
+    e.preventDefault()
+    try {
+      const data = await createCustomerUser(newCustomer)
+      setCreatedCustomer({
+        email: data.credentials.email,
+        password: data.credentials.password,
+        name: data.user.name,
+      })
+      setSuccess(`Customer account created for ${data.user.name}`)
+      setNewCustomer({ name: '', email: '', password: '' })
+      setTimeout(() => setSuccess(''), 8000)
+    } catch (err) {
+      setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to create customer'}`)
+      setCreatedCustomer(null)
+    }
+  }
+
   const tabs = [
     { id: 'shipments' as const, label: '📦 All Shipments', short: '📦 All' },
     { id: 'create' as const, label: '➕ New Shipment', short: '➕ New' },
     { id: 'event' as const, label: '📍 Add Event', short: '📍 Event' },
+    { id: 'customer' as const, label: '👤 New Customer', short: '👤 User' },
     { id: 'edit' as const, label: '✏️ Edit Shipment', short: '✏️ Edit' },
   ]
 
@@ -166,7 +194,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-white rounded-2xl p-1.5 shadow-sm border border-slate-100">
           {tabs.map(t => (
-            <button key={t.id} onClick={() => { setTab(t.id); setCreatedShipment(null) }}
+            <button key={t.id} onClick={() => { setTab(t.id); setCreatedShipment(null); if (t.id !== 'customer') setCreatedCustomer(null) }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${tab === t.id ? 'bg-navy text-white shadow-sm' : 'text-slate-500 hover:text-navy'}`}>
               <span className="hidden sm:inline">{t.label}</span>
               <span className="sm:hidden">{t.short}</span>
@@ -379,6 +407,75 @@ export default function AdminPage() {
               Add Tracking Event
             </button>
           </form>
+        )}
+
+        {/* Create Customer */}
+        {tab === 'customer' && (
+          <div className="space-y-5">
+            {createdCustomer && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                <h3 className="font-display text-lg font-bold text-amber-900 mb-2">Customer credentials — copy now</h3>
+                <p className="text-amber-800 text-sm mb-4">Share these login details with the customer. The password is shown only once.</p>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex flex-wrap gap-2">
+                    <dt className="font-semibold text-amber-900 w-24">Name</dt>
+                    <dd className="font-medium text-amber-950">{createdCustomer.name}</dd>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <dt className="font-semibold text-amber-900 w-24">Email</dt>
+                    <dd className="font-mono text-amber-950">{createdCustomer.email}</dd>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <dt className="font-semibold text-amber-900 w-24">Password</dt>
+                    <dd className="font-mono text-amber-950 break-all">{createdCustomer.password}</dd>
+                  </div>
+                </dl>
+                <button type="button" onClick={() => setCreatedCustomer(null)}
+                  className="mt-4 text-sm font-semibold text-amber-800 hover:text-amber-950 underline">
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateCustomer} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+              <h2 className="font-display text-2xl font-bold text-navy">Create Customer Account</h2>
+              <p className="text-slate-500 text-sm -mt-3">Creates a CUSTOMER login. No public signup — share credentials manually.</p>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name *</label>
+                <input type="text" required value={newCustomer.name}
+                  onChange={e => setNewCustomer(p => ({ ...p, name: e.target.value }))}
+                  placeholder="e.g. Jane Doe"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email *</label>
+                <input type="email" required value={newCustomer.email}
+                  onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))}
+                  placeholder="customer@example.com"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-semibold text-slate-700">Temporary Password *</label>
+                  <button type="button" onClick={generateTempPassword}
+                    className="text-xs font-semibold text-sky hover:text-navy transition-colors">
+                    Generate random
+                  </button>
+                </div>
+                <input type="text" required minLength={8} value={newCustomer.password}
+                  onChange={e => setNewCustomer(p => ({ ...p, password: e.target.value }))}
+                  placeholder="Min. 8 characters"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base font-mono focus:outline-none focus:ring-2 focus:ring-sky" />
+              </div>
+
+              <button type="submit" className="w-full bg-navy hover:bg-navy-mid text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-sm">
+                Create Customer Account
+              </button>
+            </form>
+          </div>
         )}
 
         {/* Edit Shipment */}

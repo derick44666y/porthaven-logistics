@@ -41,18 +41,18 @@ model User {
 }
 
 model Shipment {
-  id                String         @id @default(cuid())
-  trackingNumber    String         @unique @map("tracking_number")
-  senderName        String         @map("sender_name")
-  receiverName      String         @map("receiver_name")
+  id                String          @id @default(cuid())
+  trackingNumber    String          @unique @map("tracking_number")
+  senderName        String          @map("sender_name")
+  receiverName      String          @map("receiver_name")
   origin            String
   destination       String
   mode              ShipmentMode
-  status            ShipmentStatus @default(ORDER_CREATED)
-  customerId        String?        @map("customer_id")
-  customer          User?          @relation(fields: [customerId], references: [id])
-  createdAt         DateTime       @default(now()) @map("created_at")
-  estimatedDelivery DateTime       @map("estimated_delivery")
+  status            ShipmentStatus  @default(ORDER_CREATED)
+  customerId        String?         @map("customer_id")
+  customer          User?           @relation(fields: [customerId], references: [id])
+  createdAt         DateTime        @default(now()) @map("created_at")
+  estimatedDelivery DateTime        @map("estimated_delivery")
   events            TrackingEvent[]
 
   @@map("shipments")
@@ -71,16 +71,16 @@ model TrackingEvent {
 }
 
 model Location {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   name      String
   city      String
   country   String
-  type      String  @default("CITY")
+  type      String @default("CITY")
   latitude  Float?
   longitude Float?
 
-  @@map("locations")
   @@index([name])
   @@index([city])
   @@index([country])
+  @@map("locations")
 }

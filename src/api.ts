@@ -121,6 +121,21 @@ export function logout(): void {
   clearToken()
 }
 
+// ─── Admin API ──────────────────────────────────────────────────────────────
+
+export async function createCustomerUser(data: {
+  email: string
+  password: string
+  name: string
+}): Promise<{ user: User; credentials: { email: string; password: string } }> {
+  return request<{ user: User; credentials: { email: string; password: string } }>(
+    'POST',
+    '/admin/users',
+    data,
+    true,
+  )
+}
+
 // ─── Shipment API ───────────────────────────────────────────────────────────
 
 export async function getShipmentByTracking(trackingNumber: string): Promise<{ shipment: Shipment }> {
