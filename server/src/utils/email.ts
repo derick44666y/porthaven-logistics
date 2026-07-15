@@ -45,9 +45,18 @@ function getResendConfig() {
   }
 }
 
-export function isEmailConfigured(): boolean {
+export function getEmailConfigFlags() {
   const { apiKey, from, adminNotify } = getResendConfig()
-  return Boolean(apiKey && from && adminNotify)
+  return {
+    configured: Boolean(apiKey && from && adminNotify),
+    hasResendApiKey: Boolean(apiKey),
+    hasNotifyFromEmail: Boolean(from),
+    hasAdminNotifyEmail: Boolean(adminNotify),
+  }
+}
+
+export function isEmailConfigured(): boolean {
+  return getEmailConfigFlags().configured
 }
 
 export function logEmailConfigStatus(): void {

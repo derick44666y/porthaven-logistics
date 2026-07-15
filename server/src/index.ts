@@ -6,7 +6,7 @@ import shipmentRoutes from './routes/shipments.js'
 import locationRoutes from './routes/locations.js'
 import adminRoutes from './routes/admin.js'
 import contactRoutes from './routes/contact.js'
-import { logEmailConfigStatus } from './utils/email.js'
+import { logEmailConfigStatus, isEmailConfigured, getEmailConfigFlags } from './utils/email.js'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -40,7 +40,11 @@ app.use('/api/contact', contactRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    email: getEmailConfigFlags(),
+  })
 })
 
 app.listen(PORT, () => {
