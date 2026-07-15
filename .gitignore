@@ -41,3 +41,7 @@ Thumbs.db
 
 # Figma
 .figma/
+
+
+#Ignore cursor AI rules
+.cursor\rules\codacy.mdc
