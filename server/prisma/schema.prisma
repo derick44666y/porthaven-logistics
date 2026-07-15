@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum ShipmentMode {
+  AIR
+  SEA
+}
+
+enum ShipmentStatus {
+  ORDER_CREATED
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED_AT_FACILITY
+  CUSTOMS_CLEARANCE
+  OUT_FOR_DELIVERY
+  DELIVERED
+  EXCEPTION
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  role         UserRole   @default(CUSTOMER)
+  name         String
+  createdAt    DateTime   @default(now()) @map("created_at")
+  shipments    Shipment[]
+
+  @@map("users")
+}
+
+model Shipment {
+  id                String         @id @default(cuid())
+  trackingNumber    String         @unique @map("tracking_number")
+  senderName        String         @map("sender_name")
+  receiverName      String         @map("receiver_name")
+  origin            String
+  destination       String
+  mode              ShipmentMode
+  status            ShipmentStatus @default(ORDER_CREATED)
+  customerId        String?        @map("customer_id")
+  customer          User?          @relation(fields: [customerId], references: [id])
+  createdAt         DateTime       @default(now()) @map("created_at")
+  estimatedDelivery DateTime       @map("estimated_delivery")
+  events            TrackingEvent[]
+
+  @@map("shipments")
+}
+
+model TrackingEvent {
+  id         String         @id @default(cuid())
+  shipmentId String         @map("shipment_id")
+  shipment   Shipment       @relation(fields: [shipmentId], references: [id])
+  status     ShipmentStatus
+  location   String
+  note       String         @default("")
+  timestamp  DateTime
+
+  @@map("tracking_events")
+}
