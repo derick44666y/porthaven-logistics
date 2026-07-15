@@ -1,10 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login as apiLogin, signup as apiSignup } from '@/api'
+import { login as apiLogin } from '@/api'
 
-export default function AuthPage({ mode: initialMode }: { mode: 'login' | 'signup' }) {
-  const [tab, setTab] = useState<'login' | 'signup'>(initialMode)
-  const [name, setName] = useState('')
+export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -17,15 +15,8 @@ export default function AuthPage({ mode: initialMode }: { mode: 'login' | 'signu
     setLoading(true)
 
     try {
-      if (tab === 'login') {
-        const data = await apiLogin(email, password)
-        navigate(data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
-      } else {
-        if (!name.trim()) { setError('Please enter your full name.'); setLoading(false); return }
-        if (password.length < 6) { setError('Password must be at least 6 characters.'); setLoading(false); return }
-        const data = await apiSignup(name.trim(), email, password)
-        navigate('/dashboard')
-      }
+      const data = await apiLogin(email, password)
+      navigate(data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -51,24 +42,11 @@ export default function AuthPage({ mode: initialMode }: { mode: 'login' | 'signu
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          {/* Tabs */}
-          <div className="grid grid-cols-2 border-b border-slate-100">
-            <button onClick={() => setTab('login')} className={`py-3.5 text-sm font-semibold transition-colors ${tab === 'login' ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy'}`}>Sign In</button>
-            <button onClick={() => setTab('signup')} className={`py-3.5 text-sm font-semibold transition-colors ${tab === 'signup' ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy'}`}>Create Account</button>
-          </div>
-
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
             <h2 className="font-display text-2xl font-bold text-navy">
-              {tab === 'login' ? 'Welcome back' : 'Create your account'}
+              Staff sign in
             </h2>
-
-            {tab === 'signup' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Sarah Johnson" required
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" />
-              </div>
-            )}
+            <p className="text-sm text-slate-500">Accounts are created by an administrator.</p>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
@@ -78,7 +56,7 @@ export default function AuthPage({ mode: initialMode }: { mode: 'login' | 'signu
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={tab === 'signup' ? 'Min. 6 characters' : '••••••••'} required
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" />
             </div>
 
@@ -88,17 +66,10 @@ export default function AuthPage({ mode: initialMode }: { mode: 'login' | 'signu
 
             <button type="submit" disabled={loading}
               className="w-full bg-ember hover:bg-orange-400 disabled:opacity-60 text-white py-3.5 rounded-xl font-bold text-base transition-colors shadow-sm mt-2">
-              {loading ? 'Please wait...' : tab === 'login' ? 'Sign In' : 'Create Account'}
+              {loading ? 'Please wait...' : 'Sign In'}
             </button>
           </form>
         </div>
-
-        <p className="text-center text-sm text-slate-500 mt-4">
-          {tab === 'login' ? "Don't have an account? " : 'Already have an account? '}
-          <button onClick={() => setTab(tab === 'login' ? 'signup' : 'login')} className="text-sky font-semibold hover:text-sky-muted">
-            {tab === 'login' ? 'Sign up free' : 'Sign in'}
-          </button>
-        </p>
       </div>
     </div>
   )

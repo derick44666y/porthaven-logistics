@@ -110,13 +110,6 @@ async function request<T>(
 
 // ─── Auth API ───────────────────────────────────────────────────────────────
 
-export async function signup(name: string, email: string, password: string): Promise<{ user: User; token: string }> {
-  const data = await request<{ user: User; token: string }>('POST', '/auth/signup', { name, email, password })
-  setToken(data.token)
-  setCurrentUser(data.user)
-  return data
-}
-
 export async function login(email: string, password: string): Promise<{ user: User; token: string }> {
   const data = await request<{ user: User; token: string }>('POST', '/auth/login', { email, password })
   setToken(data.token)

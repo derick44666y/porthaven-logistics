@@ -7,7 +7,7 @@ A modern international air and sea freight tracking application with real-time s
 - **Public Tracking**: Track shipments by tracking number without login
 - **Customer Dashboard**: View and manage linked shipments
 - **Admin Panel**: Create shipments, update tracking events, edit/delete shipments
-- **Authentication**: Role-based access (CUSTOMER/ADMIN)
+- **Authentication**: Admin-created accounts with role-based access (CUSTOMER/ADMIN)
 - **WhatsApp Integration**: Customer support via WhatsApp
 - **Real-time Status Updates**: 8-stage tracking workflow
 
@@ -93,8 +93,7 @@ npm run dev
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/signup` - Create new account
-- `POST /api/auth/login` - Login
+- `POST /api/auth/login` - Login with an admin-created account
 
 ### Shipments
 - `GET /api/shipments/:trackingNumber` - Public tracking
@@ -122,6 +121,12 @@ npm run dev
 ```bash
 cd server
 npx prisma migrate dev --name migration-name
+```
+
+Production deploys should use:
+```bash
+cd server
+npm run db:migrate
 ```
 
 ### Generate Prisma Client
