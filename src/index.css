@@ -55,3 +55,61 @@ body {
 .timeline-item.done:not(:last-child)::before {
   background: linear-gradient(to bottom, #1d8fda, #1d8fda88);
 }
+
+/* ─── Animations ─────────────────────────────────────────────────────── */
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroCharReveal {
+  0%   { opacity: 0; transform: rotateY(90deg) translateX(30px); }
+  100% { opacity: 1; transform: rotateY(0) translateX(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(250, 59, 14, 0.4); }
+  50%      { box-shadow: 0 0 0 12px rgba(250, 59, 14, 0); }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.7s ease-out both;
+}
+
+.animate-hero-char {
+  animation: heroCharReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.5s ease-out both;
+}
+
+.animate-count-up {
+  animation: countUp 0.6s ease-out both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+.scroll-animate {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-animate.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

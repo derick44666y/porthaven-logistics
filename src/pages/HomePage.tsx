@@ -1,9 +1,86 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+          }
+        })
+      },
+      { threshold: 0.15 }
+    )
+    const elements = document.querySelectorAll('.scroll-animate')
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+}
+
+function useCountUp(end: number, duration = 2000) {
+  const [count, setCount] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  const started = useRef(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true
+          const startTime = performance.now()
+          function tick(now: number) {
+            const elapsed = now - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            setCount(Math.floor(progress * end))
+            if (progress < 1) requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }
+      },
+      { threshold: 0.5 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [end, duration])
+
+  return { count, ref }
+}
+
+function Counter({ value, label, suffix = '+' }: { value: number; label: string; suffix?: string }) {
+  const { count, ref } = useCountUp(value)
+  return (
+    <div ref={ref} className="text-center py-5 px-4">
+      <div className="font-display text-3xl font-bold text-ember">{count}{suffix}</div>
+      <div className="text-slate-400 text-xs mt-0.5">{label}</div>
+    </div>
+  )
+}
+
+function HeroAnimationText({ text, className = '' }: { text: string; className?: string }) {
+  return (
+    <span className={className}>
+      {text.split('').map((char, i) => (
+        <span
+          key={i}
+          className="inline-block animate-hero-char"
+          style={{ animationDelay: `${i * 0.04}s` }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 export default function HomePage() {
   const [trackingInput, setTrackingInput] = useState('')
   const navigate = useNavigate()
+
+  useScrollReveal()
 
   function handleTrack(e: FormEvent) {
     e.preventDefault()
@@ -23,73 +100,84 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
+      {/* ─── Hero ───────────────────────────────────────────── */}
       <section
-        className="relative min-h-[600px] flex items-center justify-center text-white overflow-hidden"
+        className="relative min-h-[700px] flex items-center overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #0d1a2e 0%, #152641 40%, #1e3a5f 100%)' }}
       >
+        {/* Dot pattern overlay */}
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(29,143,218,0.8) 1px, transparent 0)',
           backgroundSize: '40px 40px'
         }} />
-        <div className="absolute bottom-0 right-0 opacity-5 text-[320px] leading-none select-none pointer-events-none">🚢</div>
 
-        <div className="relative z-10 text-center px-4 sm:px-6 py-20 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-sky/20 border border-sky/30 rounded-full px-4 py-1.5 text-sm text-sky-muted font-medium mb-6">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            International Air & Sea Freight
+        {/* Background decorative icon */}
+        <div className="absolute -bottom-10 -right-10 opacity-5 text-[400px] leading-none select-none pointer-events-none">🚢</div>
+
+        <div className="relative z-10 w-full px-4 sm:px-6 py-24">
+          <div className="max-w-3xl mx-auto">
+            {/* Badge */}
+            <div className="animate-fade-slide-up" style={{ animationDelay: '0.1s' }}>
+              <div className="inline-flex items-center gap-2 bg-ember/20 border border-ember/30 rounded-full px-4 py-1.5 text-sm font-medium mb-6" style={{ color: '#f97316' }}>
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                International Air & Sea Freight
+              </div>
+            </div>
+
+            {/* Animated heading */}
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-tight mb-4 text-white">
+              <HeroAnimationText text="Logistics" />
+              <br />
+              <span className="text-ember">
+                <HeroAnimationText text="made easy." />
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-slate-300 text-lg sm:text-xl mb-10 max-w-xl leading-relaxed animate-fade-slide-up" style={{ animationDelay: '0.8s' }}>
+              Enter your tracking number below to get real-time updates on your package, wherever it is in the world.
+            </p>
+
+            {/* Search form */}
+            <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3 max-w-xl animate-fade-slide-up" style={{ animationDelay: '1s' }}>
+              <input
+                type="text"
+                value={trackingInput}
+                onChange={e => setTrackingInput(e.target.value)}
+                placeholder="Enter tracking number (e.g. TRKABC12345)"
+                className="flex-1 px-5 py-4 rounded-xl text-navy-dark bg-white text-base font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ember shadow-lg"
+              />
+              <button type="submit" className="bg-ember hover:bg-orange-400 text-white px-8 py-4 rounded-xl text-base font-bold shadow-lg transition-colors whitespace-nowrap animate-pulse-glow">
+                Track Now
+              </button>
+            </form>
           </div>
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-tight mb-4">
-            Track Your <span className="text-sky">Shipment</span>
-          </h1>
-          <p className="text-slate-300 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-            Enter your tracking number below to get real-time updates on your package, wherever it is in the world.
-          </p>
-
-          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
-            <input
-              type="text"
-              value={trackingInput}
-              onChange={e => setTrackingInput(e.target.value)}
-              placeholder="Enter tracking number (e.g. TRKABC12345)"
-              className="flex-1 px-5 py-4 rounded-xl text-navy-dark bg-white text-base font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky shadow-lg"
-            />
-            <button type="submit" className="bg-ember hover:bg-orange-400 text-white px-8 py-4 rounded-xl text-base font-bold shadow-lg transition-colors whitespace-nowrap">
-              Track Now
-            </button>
-          </form>
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="bg-navy border-b border-navy-mid">
+      {/* ─── Stats bar ──────────────────────────────────────── */}
+      <section className="bg-navy-dark border-b border-navy-mid">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-navy-mid">
-            {[
-              { label: 'Countries Served', value: '80+' },
-              { label: 'Shipments Delivered', value: '50,000+' },
-              { label: 'On-time Rate', value: '98.4%' },
-              { label: 'Support Available', value: '24/7' },
-            ].map(s => (
-              <div key={s.label} className="text-center py-5 px-4">
-                <div className="font-display text-2xl font-bold text-sky">{s.value}</div>
-                <div className="text-slate-400 text-xs mt-0.5">{s.label}</div>
-              </div>
-            ))}
+            <Counter value={80} label="Countries Served" />
+            <Counter value={50000} label="Shipments Delivered" />
+            <Counter value={98} label="On-time Rate" suffix="%" />
+            <Counter value={24} label="Support Available" suffix="/7" />
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16 px-4 sm:px-6 max-w-7xl mx-auto">
-        <div className="text-center mb-12">
+      {/* ─── Features ───────────────────────────────────────── */}
+      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-14 scroll-animate">
+          <div className="inline-flex items-center gap-2 bg-ember/10 border border-ember/20 rounded-full px-4 py-1 text-sm font-medium text-ember mb-4">Our Services</div>
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-navy mb-3">Why Choose Porthaven?</h2>
           <p className="text-slate-500 text-lg max-w-xl mx-auto">Full-service international logistics with transparency at every step.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map(f => (
-            <div key={f.title} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
-              <div className="text-3xl mb-4">{f.icon}</div>
+          {features.map((f, i) => (
+            <div key={f.title} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 scroll-animate group" style={{ animationDelay: `${i * 0.1}s`, transitionDelay: `${i * 0.05}s` }}>
+              <div className="w-12 h-12 rounded-xl bg-ember-light flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">{f.icon}</div>
               <h3 className="font-display text-xl font-bold text-navy mb-2">{f.title}</h3>
               <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
             </div>
@@ -97,35 +185,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-16 bg-sky-light">
+      {/* ─── How it works ───────────────────────────────────── */}
+      <section className="py-20 bg-gradient-to-b from-white to-sky-light">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-navy mb-3">How It Works</h2>
-          <p className="text-slate-500 text-lg mb-12">Simple, transparent shipping from origin to destination.</p>
+          <div className="scroll-animate">
+            <div className="inline-flex items-center gap-2 bg-ember/10 border border-ember/20 rounded-full px-4 py-1 text-sm font-medium text-ember mb-4">How It Works</div>
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-navy mb-3">Simple, Transparent Shipping</h2>
+            <p className="text-slate-500 text-lg mb-12">From origin to destination, we handle everything.</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { n: '1', title: 'Book Your Shipment', desc: 'Contact us with your shipping details. We generate a unique tracking number instantly.' },
-              { n: '2', title: 'We Handle Logistics', desc: 'Our team picks up, clears customs, and ships your cargo via air or sea freight.' },
-              { n: '3', title: 'Track & Receive', desc: 'Follow every update online. Your package arrives safely at its destination.' },
-            ].map(s => (
-              <div key={s.n} className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-navy text-white font-display text-2xl font-bold flex items-center justify-center mb-4 shadow-md">{s.n}</div>
+              { n: '01', title: 'Book Your Shipment', desc: 'Contact us with your shipping details. We generate a unique tracking number instantly.' },
+              { n: '02', title: 'We Handle Logistics', desc: 'Our team picks up, clears customs, and ships your cargo via air or sea freight.' },
+              { n: '03', title: 'Track & Receive', desc: 'Follow every update online. Your package arrives safely at its destination.' },
+            ].map((s, i) => (
+              <div key={s.n} className="flex flex-col items-center text-center scroll-animate" style={{ animationDelay: `${i * 0.15}s` }}>
+                <div className="relative mb-6">
+                  <div className="w-20 h-20 rounded-full bg-navy text-white font-display text-3xl font-bold flex items-center justify-center shadow-lg shadow-navy/20">{s.n}</div>
+                  {i < 2 && <div className="hidden md:block absolute top-10 left-full w-[calc(100%-5rem)] h-0.5 bg-ember/20 -z-10" />}
+                </div>
                 <h3 className="font-semibold text-navy text-lg mb-2">{s.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 px-4 sm:px-6 bg-navy text-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-display text-4xl sm:text-5xl font-bold mb-4">Ready to Ship?</h2>
+      {/* ─── CTA ────────────────────────────────────────────── */}
+      <section className="py-20 px-4 sm:px-6" style={{ background: 'linear-gradient(135deg, #0d1a2e 0%, #152641 40%, #1e3a5f 100%)' }}>
+        <div className="max-w-3xl mx-auto text-center scroll-animate">
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-white mb-4">Ready to Ship?</h2>
           <p className="text-slate-300 text-lg mb-8">Get in touch today and we'll handle the rest.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a href="mailto:info@porthavendelivery.com" className="flex items-center gap-3 bg-navy-mid hover:bg-navy-light border border-slate-700 text-white px-6 py-3.5 rounded-xl font-medium transition-colors w-full sm:w-auto justify-center">
-              <svg className="w-5 h-5 text-sky" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            <a href="mailto:info@porthavendelivery.com" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3.5 rounded-xl font-medium transition-colors w-full sm:w-auto justify-center backdrop-blur-sm">
+              <svg className="w-5 h-5 text-ember" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
               info@porthavendelivery.com
             </a>
             <a href="https://wa.me/19515896129" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-green-600 hover:bg-green-500 text-white px-6 py-3.5 rounded-xl font-semibold transition-colors w-full sm:w-auto justify-center shadow-lg">

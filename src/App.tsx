@@ -30,12 +30,11 @@ export default function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/track" element={<TrackPage />} />
           <Route path="/track/:trackingNumber" element={<TrackPage />} />
+          {/* Login is internal/admin only — no public signup */}
           <Route path="/login" element={
             user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace /> : <AuthPage mode="login" />
-          } />
-          <Route path="/signup" element={
-            user ? <Navigate to="/dashboard" replace /> : <AuthPage mode="signup" />
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute requiredRole="CUSTOMER">
