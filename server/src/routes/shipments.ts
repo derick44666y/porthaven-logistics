@@ -1,9 +1,53 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
+import { z } from 'zod'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
+import { parseBody } from '../utils/validation.js'
 
 const router = Router()
 const prisma = new PrismaClient()
+
+const modeSchema = z.enum(['AIR', 'SEA'])
+const statusSchema = z.enum([
+  'ORDER_CREATED',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'ARRIVED_AT_FACILITY',
+  'CUSTOMS_CLEARANCE',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'EXCEPTION',
+])
+
+const trimmedText = z.string().trim().min(1).max(160)
+const optionalTrimmedText = z.string().trim().min(1).max(160).optional()
+const dateInput = z.coerce.date().refine((date) => !Number.isNaN(date.getTime()), 'Invalid date')
+
+const createShipmentSchema = z.object({
+  senderName: trimmedText,
+  receiverName: trimmedText,
+  origin: trimmedText,
+  destination: trimmedText,
+  mode: modeSchema,
+  customerId: z.string().trim().min(1).max(128).optional().nullable(),
+  estimatedDelivery: dateInput,
+})
+
+const updateShipmentSchema = z.object({
+  senderName: optionalTrimmedText,
+  receiverName: optionalTrimmedText,
+  origin: optionalTrimmedText,
+  destination: optionalTrimmedText,
+  mode: modeSchema.optional(),
+  estimatedDelivery: dateInput.optional(),
+}).refine((data) => Object.keys(data).length > 0, 'At least one field is required')
+
+const createEventSchema = z.object({
+  status: statusSchema,
+  location: trimmedText,
+  note: z.string().trim().max(500).optional(),
+  timestamp: dateInput.optional(),
+})
 
 function generateTrackingNumber(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -76,17 +120,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 // POST /shipments — admin only
 router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
-    const { senderName, receiverName, origin, destination, mode, customerId, estimatedDelivery } = req.body
-
-    if (!senderName || !receiverName || !origin || !destination || !mode || !estimatedDelivery) {
-      res.status(400).json({ error: 'Missing required fields: senderName, receiverName, origin, destination, mode, estimatedDelivery' })
-      return
-    }
-
-    if (!['AIR', 'SEA'].includes(mode)) {
-      res.status(400).json({ error: 'Mode must be AIR or SEA' })
-      return
-    }
+    const body = parseBody(createShipmentSchema, req.body, res)
+    if (!body) return
 
     let trackingNumber = ''
     let exists = true
@@ -99,13 +134,13 @@ router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Resp
     const shipment = await prisma.shipment.create({
       data: {
         trackingNumber,
-        senderName,
-        receiverName,
-        origin,
-        destination,
-        mode,
-        customerId: customerId || null,
-        estimatedDelivery: new Date(estimatedDelivery),
+        senderName: body.senderName,
+        receiverName: body.receiverName,
+        origin: body.origin,
+        destination: body.destination,
+        mode: body.mode,
+        customerId: body.customerId || null,
+        estimatedDelivery: body.estimatedDelivery,
         status: 'ORDER_CREATED',
       },
     })
@@ -115,7 +150,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Resp
       data: {
         shipmentId: shipment.id,
         status: 'ORDER_CREATED',
-        location: origin,
+        location: body.origin,
         note: 'Shipment created and registered in system.',
         timestamp: new Date(),
       },
@@ -132,12 +167,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Resp
 router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const { status, location, note, timestamp } = req.body
-
-    if (!status || !location) {
-      res.status(400).json({ error: 'Status and location are required' })
-      return
-    }
+    const body = parseBody(createEventSchema, req.body, res)
+    if (!body) return
 
     const shipment = await prisma.shipment.findUnique({ where: { id } })
     if (!shipment) {
@@ -148,17 +179,17 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
     const event = await prisma.trackingEvent.create({
       data: {
         shipmentId: id,
-        status,
-        location,
-        note: note || '',
-        timestamp: timestamp ? new Date(timestamp) : new Date(),
+        status: body.status,
+        location: body.location,
+        note: body.note || '',
+        timestamp: body.timestamp || new Date(),
       },
     })
 
     // Update shipment status
     await prisma.shipment.update({
       where: { id },
-      data: { status },
+      data: { status: body.status },
     })
 
     res.status(201).json({ event })
@@ -205,7 +236,8 @@ router.put('/:id/link', authMiddleware, async (req: Request, res: Response) => {
 router.put('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const { senderName, receiverName, origin, destination, mode, estimatedDelivery } = req.body
+    const body = parseBody(updateShipmentSchema, req.body, res)
+    if (!body) return
 
     const shipment = await prisma.shipment.findUnique({ where: { id } })
     if (!shipment) {
@@ -216,12 +248,12 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     const updated = await prisma.shipment.update({
       where: { id },
       data: {
-        ...(senderName && { senderName }),
-        ...(receiverName && { receiverName }),
-        ...(origin && { origin }),
-        ...(destination && { destination }),
-        ...(mode && { mode }),
-        ...(estimatedDelivery && { estimatedDelivery: new Date(estimatedDelivery) }),
+        ...(body.senderName && { senderName: body.senderName }),
+        ...(body.receiverName && { receiverName: body.receiverName }),
+        ...(body.origin && { origin: body.origin }),
+        ...(body.destination && { destination: body.destination }),
+        ...(body.mode && { mode: body.mode }),
+        ...(body.estimatedDelivery && { estimatedDelivery: body.estimatedDelivery }),
       },
     })
 

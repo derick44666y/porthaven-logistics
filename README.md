@@ -67,7 +67,13 @@ npx prisma migrate dev --name init
 npx tsx prisma/seed.ts
 ```
 
-5. Start the servers
+5. Create the admin account
+```bash
+cd server
+ADMIN_EMAIL="admin@example.com" ADMIN_PASSWORD="strong-unique-password" npm run seed:admin
+```
+
+6. Start the servers
 
 Backend (in `server/` directory):
 ```bash
@@ -79,16 +85,13 @@ Frontend (in root directory):
 npm run dev
 ```
 
-6. Access the application
+7. Access the application
 - Frontend: http://localhost:8443
 - Backend API: http://localhost:3001
 
-## Default Admin Credentials
+## Admin Account
 
-- Email: `admin@porthaven.com`
-- Password: `admin123`
-
-⚠️ **Important**: Change the admin password after first login!
+Create or rotate the production admin account with `npm run seed:admin` from the `server/` directory. The script reads `ADMIN_EMAIL` and `ADMIN_PASSWORD`, creates or updates that account as `ADMIN`, and demotes any other admin accounts to `CUSTOMER`.
 
 ## API Endpoints
 

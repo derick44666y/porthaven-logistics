@@ -8,6 +8,8 @@ import locationRoutes from './routes/locations.js'
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
 
+app.set('trust proxy', 1)
+
 // Allowed CORS origins (comma-separated FRONTEND_URL env, or sensible defaults)
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:8443')
   .split(',')
