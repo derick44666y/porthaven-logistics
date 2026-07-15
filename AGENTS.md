@@ -1,6 +1,6 @@
-# figma-make-app
+# porthaven-logistics
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+React + Vite + Tailwind CSS package tracking web application.
 
 ## Development Server
 

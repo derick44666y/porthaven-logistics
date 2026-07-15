@@ -71,7 +71,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     return html.replace(`<!-- ${slotName} -->`, content)
   }
 
-  const title = config.title ?? "Figma Make App"
+  const title = config.title ?? "PortHaven Logistics"
   const description = config.description ?? ''
   const favicon = config.icons?.icon ?? ''
   const socialImage = config.openGraph?.image ?? ''
@@ -84,7 +84,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
   const robotsTxt = config.robots?.index === false ? 'User-agent: *\nDisallow: /\n' : ''
 
   return {
-    name: 'figma-site-configuration',
+    name: 'site-configuration',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!robotsTxt || req.url?.split('?')[0] !== '/robots.txt') return next()
@@ -140,7 +140,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
 
 function figmaErrorOverlayReplay(): Plugin {
   return {
-    name: 'figma-error-overlay-replay',
+      name: 'error-overlay-replay',
     apply: 'serve',
     configureServer(server) {
       let lastError: object | null = null
@@ -165,7 +165,7 @@ function figmaReactRefreshBoundaryFallback(): Plugin {
   const hadRefreshBoundary = new Map<string, boolean>()
   let sendFullReload: (() => void) | null = null
   return {
-    name: 'figma-react-refresh-boundary-fallback',
+    name: 'react-refresh-boundary-fallback',
     apply: 'serve',
     enforce: 'post',
     configureServer(server) { sendFullReload = () => server.ws.send({ type: 'full-reload', path: '*' }) },
@@ -189,7 +189,7 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
   const STORIES_MODULE = `export const stories = import.meta.glob(${JSON.stringify(storiesGlob)})`
   const HTML_BOOTSTRAP = `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body><div id="figma-make-kit-root"></div><script type="module">import { stories } from 'virtual:figma-stories';window.__FIGMA__=Object.assign(window.__FIGMA__??{},{stories});window.dispatchEvent(new CustomEvent('figma.ready'))</script></body></html>`
   return {
-    name: 'figma-make-kit',
+    name: 'make-kit',
     apply: 'serve',
     resolveId(id) { if (id === VIRTUAL_ID) return RESOLVED_ID; return null },
     load(id) { if (id !== RESOLVED_ID) return null; return STORIES_MODULE },
