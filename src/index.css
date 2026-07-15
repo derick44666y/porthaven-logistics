@@ -31,6 +31,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Prevent iOS zoom when focusing inputs (must be >= 16px) */
+input, textarea, select, button {
+  font-size: 16px;
+}
+
 /* Hide scrollbar while keeping scroll functionality */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

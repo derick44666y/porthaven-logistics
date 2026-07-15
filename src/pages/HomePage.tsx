@@ -6,9 +6,7 @@ function useScrollReveal() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
-          }
+          if (entry.isIntersecting) entry.target.classList.add('visible')
         })
       },
       { threshold: 0.1 }
@@ -35,8 +33,7 @@ function Counter({ value, label, suffix = '+' }: { value: number; label: string;
           const duration = 2000
           const startTime = performance.now()
           function tick(now: number) {
-            const elapsed = now - startTime
-            const progress = Math.min(elapsed / duration, 1)
+            const progress = Math.min((now - startTime) / duration, 1)
             setCount(Math.floor(progress * end))
             if (progress < 1) requestAnimationFrame(tick)
           }
@@ -57,8 +54,11 @@ function Counter({ value, label, suffix = '+' }: { value: number; label: string;
   )
 }
 
-const HERO_IMG = 'https://images.unsplash.com/photo-1494412574643-11ff0a5c1c3c?w=600&q=80'
-const TRUCK_IMG = 'https://images.unsplash.com/photo-1566576912321-b58ed6b7ae1c?w=600&q=80'
+// Verified-working Unsplash IDs (all returned HTTP 200)
+const HERO_IMG = 'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=900&q=70'
+const SHIP_IMG = 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=900&q=70'
+const PLANE_IMG = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=900&q=70'
+const TRUCK_IMG = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=900&q=70'
 
 export default function HomePage() {
   const [trackingInput, setTrackingInput] = useState('')
@@ -85,40 +85,39 @@ export default function HomePage() {
   return (
     <div>
       {/* ─── Hero ─────────────────────────────────────────── */}
-      <section className="relative min-h-[85vh] md:min-h-[650px] flex items-center overflow-hidden">
-        {/* Background image — visible on ALL sizes */}
+      <section className="relative min-h-[88vh] md:min-h-[680px] flex items-center overflow-hidden">
+        {/* Background image — verified working, always visible */}
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{
           backgroundImage: `url(${HERO_IMG})`,
-          backgroundPosition: '65% center',
+          backgroundPosition: 'center',
         }} />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-navy-dark/95 via-navy/90 to-navy-mid/80" />
+        {/* Lighter overlay so the image clearly shows */}
+        <div className="absolute inset-0 bg-gradient-to-b from-navy-dark/80 via-navy/55 to-navy-mid/85" />
 
         <div className="relative z-10 w-full px-5 py-16 md:py-28">
           <div className="max-w-3xl mx-auto text-center md:text-left">
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-ember/20 border border-ember/30 rounded-full px-4 py-1.5 text-xs md:text-sm font-medium mb-5 md:mb-6" style={{ color: '#f97316' }}>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               International Air & Sea Freight
             </div>
 
-            {/* Heading */}
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-white mb-3">
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-white mb-3 drop-shadow-lg">
               Logistics <span className="text-ember">made easy.</span>
             </h1>
 
-            <p className="text-slate-300 text-base md:text-xl mb-6 md:mb-8 max-w-xl mx-auto md:mx-0 leading-relaxed">
+            <p className="text-slate-100 text-base md:text-xl mb-6 md:mb-8 max-w-xl mx-auto md:mx-0 leading-relaxed drop-shadow">
               Track your shipment in real-time from anywhere in the world.
             </p>
 
-            {/* Search */}
+            {/* Search — text-base (16px) prevents iOS zoom on focus */}
             <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto md:mx-0">
               <input
                 type="text"
                 value={trackingInput}
                 onChange={e => setTrackingInput(e.target.value)}
                 placeholder="Tracking number"
-                className="flex-1 px-4 py-3.5 md:px-5 md:py-4 rounded-xl text-navy-dark bg-white/95 text-sm md:text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ember shadow-lg"
+                style={{ fontSize: '16px' }}
+                className="flex-1 px-4 py-3.5 md:px-5 md:py-4 rounded-xl text-navy-dark bg-white/95 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ember shadow-lg"
               />
               <button type="submit" className="bg-ember hover:bg-orange-400 text-white px-6 py-3.5 md:px-8 md:py-4 rounded-xl text-sm md:text-base font-bold shadow-lg transition-colors animate-pulse-glow">
                 Track Now
@@ -138,14 +137,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── Features ──────────────────────────────────────── */}
-      <section className="py-14 md:py-20 px-5 md:px-6 max-w-7xl mx-auto">
-        <div className="text-center mb-10 scroll-animate">
+      {/* ─── Features with images ─────────────────────────── */}
+      <section className="relative py-14 md:py-20 px-5 md:px-6 max-w-7xl mx-auto">
+        {/* Ghosted cargo image on the right, visible on all sizes */}
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2/3 md:w-1/3 h-full opacity-[0.06] pointer-events-none" style={{
+          backgroundImage: `url(${SHIP_IMG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }} />
+
+        <div className="text-center mb-10 relative z-10 scroll-animate">
           <div className="inline-flex items-center gap-2 bg-ember/10 border border-ember/20 rounded-full px-4 py-1 text-xs md:text-sm font-medium text-ember mb-3">Our Services</div>
           <h2 className="font-display text-3xl md:text-5xl font-bold text-navy mb-2">Why Choose Porthaven?</h2>
           <p className="text-slate-500 text-sm md:text-lg max-w-xl mx-auto">Full-service international logistics with transparency at every step.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 relative z-10">
           {features.map((f, i) => (
             <div key={f.title} className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 hover:shadow-md active:scale-[0.98] transition-all scroll-animate">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-ember-light flex items-center justify-center text-xl md:text-2xl mb-3 md:mb-4">{f.icon}</div>
@@ -157,8 +163,15 @@ export default function HomePage() {
       </section>
 
       {/* ─── How it works ──────────────────────────────────── */}
-      <section className="py-14 md:py-20 px-5 md:px-6 bg-gradient-to-b from-white to-sky-light">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="relative py-14 md:py-20 px-5 md:px-6 bg-gradient-to-b from-white to-sky-light overflow-hidden">
+        {/* Ghosted plane image */}
+        <div className="absolute left-0 bottom-0 w-3/4 md:w-1/2 h-3/4 opacity-[0.05] pointer-events-none" style={{
+          backgroundImage: `url(${PLANE_IMG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }} />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="scroll-animate mb-10">
             <div className="inline-flex items-center gap-2 bg-ember/10 border border-ember/20 rounded-full px-4 py-1 text-xs md:text-sm font-medium text-ember mb-3">How It Works</div>
             <h2 className="font-display text-3xl md:text-5xl font-bold text-navy mb-2">Simple, Transparent Shipping</h2>
@@ -169,7 +182,7 @@ export default function HomePage() {
               { n: '01', title: 'Book Your Shipment', desc: 'Contact us. We generate a unique tracking number instantly.' },
               { n: '02', title: 'We Handle Logistics', desc: 'Our team picks up, clears customs, and ships via air or sea.' },
               { n: '03', title: 'Track & Receive', desc: 'Follow every update online. Your package arrives safely.' },
-            ].map((s, i) => (
+            ].map((s) => (
               <div key={s.n} className="flex flex-col items-center text-center scroll-animate">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-navy text-white font-display text-2xl md:text-3xl font-bold flex items-center justify-center shadow-md mb-4">{s.n}</div>
                 <h3 className="font-semibold text-navy text-base md:text-lg mb-1.5">{s.title}</h3>
@@ -180,14 +193,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── CTA (stacked on mobile) ──────────────────────── */}
+      {/* ─── CTA (stacked on mobile, image visible) ─────────── */}
       <section className="relative">
         <div className="flex flex-col md:flex-row">
-          {/* Image — visible on mobile too */}
-          <div className="w-full md:w-1/2 h-48 md:min-h-[350px] bg-cover bg-center" style={{
-            backgroundImage: `url(${TRUCK_IMG})`,
-          }} />
-          {/* Content */}
+          <div className="w-full md:w-1/2 h-56 md:min-h-[350px] bg-cover bg-center" style={{ backgroundImage: `url(${TRUCK_IMG})` }} />
           <div className="w-full md:w-1/2 py-12 md:py-20 px-6 md:px-12 text-center md:text-left" style={{ background: 'linear-gradient(135deg, #0d1a2e 0%, #152641 40%, #1e3a5f 100%)' }}>
             <div className="max-w-lg mx-auto md:mx-0">
               <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-3">Ready to Ship?</h2>
