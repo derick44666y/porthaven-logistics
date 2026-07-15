@@ -8,6 +8,7 @@ import TrackPage from '@/pages/TrackPage'
 import AuthPage from '@/pages/AuthPage'
 import DashboardPage from '@/pages/DashboardPage'
 import AdminPage from '@/pages/AdminPage'
+import ContactPage from '@/pages/ContactPage'
 
 export default function App() {
   const [user, setUser] = useState<User | null>(getCurrentUser())
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/track" element={<TrackPage />} />
           <Route path="/track/:trackingNumber" element={<TrackPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           {/* Login is internal/admin only — no public signup */}
           <Route path="/login" element={
             user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace /> : <AuthPage mode="login" />
