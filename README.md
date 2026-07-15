@@ -111,9 +111,15 @@ Uses [Resend](https://resend.com). Set these env vars (never commit real values)
 Behaviour:
 - **Status update** — when an admin adds a tracking event that changes shipment status, the linked customer receives an email with the new status and a link to `/track/{trackingNumber}`.
 - **Welcome** — when an admin creates a customer account, a welcome email includes login credentials (UI also shows credentials once).
-- **Contact form** — `POST /api/contact` emails `ADMIN_NOTIFY_EMAIL` with the visitor's message (`Reply-To` is the visitor so staff can reply).
+- **Contact form** — `POST /api/contact` emails `ADMIN_NOTIFY_EMAIL` with the visitor's message. The `Reply-To` keeps the visitor's real address (so staff can reply directly) wrapped in a `"<name> via PortHaven Site" <visitor-email>` display name. The `From` address always stays fully on the verified Resend domain (SPF/DKIM aligned).
 
 Without these vars, the API still works; email sends are skipped/logged and contact returns 503.
+
+### Known email-deliverability behaviour
+
+- The **contact-form email can land in the admin's spam/junk folder**, especially on the *first* few sends. This is an inbox-provider heuristic (the `Reply-To` domain differs from the verified `From` domain), not a misconfiguration — SPF/DKIM/DMARC are correctly aligned on the `From` side.
+- It typically improves after a handful of real sends as the sending domain builds reputation. If the admin email is missing from the inbox, check the spam/junk folder and mark it "Not spam."
+- This is expected behaviour and does not need further code changes; it is documented here rather than treated as a defect.
 
 ## Admin Account
 

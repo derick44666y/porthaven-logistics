@@ -118,6 +118,11 @@ function brandedShell(title: string, bodyHtml: string): string {
 </html>`
 }
 
+function formatReplyTo(displayName: string, email: string): string {
+  const safeName = displayName.replace(/["<>]/g, '').trim() || 'PortHaven Site'
+  return `${safeName} <${email}>`
+}
+
 async function sendEmail(options: {
   to: string
   subject: string
@@ -256,20 +261,23 @@ export async function sendContactFormEmail(params: {
     <p style="margin:0;font-size:13px;color:${COLORS.muted};">Reply directly to this email to respond to the sender.</p>
   `
 
-  // Reply-To = visitor so admin can reply to them; notification emails use ADMIN_NOTIFY_EMAIL separately
+  // Reply-To keeps the visitor's real address (so staff can reply) but wraps it in a
+  // "via PortHaven Site" display name. The From address stays fully on the verified
+  // domain (SPF/DKIM aligned); the labelled Reply-To reduces first-sender spam scoring.
+  const replyTo = formatReplyTo(`${params.name} via PortHaven Site`, params.email)
   return sendEmail({
     to: adminNotify,
     subject,
     html: brandedShell(subject, body),
-    replyTo: params.email,
+    replyTo,
   })
 }
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
     .replace(/'/g, '&#39;')
 }
