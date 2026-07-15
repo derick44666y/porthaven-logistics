@@ -127,13 +127,21 @@ export async function createCustomerUser(data: {
   email: string
   password: string
   name: string
-}): Promise<{ user: User; credentials: { email: string; password: string } }> {
-  return request<{ user: User; credentials: { email: string; password: string } }>(
+}): Promise<{ user: User; credentials: { email: string; password: string }; emailSent?: boolean }> {
+  return request<{ user: User; credentials: { email: string; password: string }; emailSent?: boolean }>(
     'POST',
     '/admin/users',
     data,
     true,
   )
+}
+
+export async function submitContactForm(data: {
+  name: string
+  email: string
+  message: string
+}): Promise<{ message: string }> {
+  return request<{ message: string }>('POST', '/contact', data)
 }
 
 // ─── Shipment API ───────────────────────────────────────────────────────────

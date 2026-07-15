@@ -25,7 +25,7 @@ export default function AdminPage() {
   const [createdShipment, setCreatedShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', password: '' })
-  const [createdCustomer, setCreatedCustomer] = useState<{ email: string; password: string; name: string } | null>(null)
+  const [createdCustomer, setCreatedCustomer] = useState<{ email: string; password: string; name: string; emailSent?: boolean } | null>(null)
 
   // Location autocomplete
   const [locationSuggestions, setLocationSuggestions] = useState<Location[]>([])
@@ -143,8 +143,13 @@ export default function AdminPage() {
         email: data.credentials.email,
         password: data.credentials.password,
         name: data.user.name,
+        emailSent: data.emailSent,
       })
-      setSuccess(`Customer account created for ${data.user.name}`)
+      setSuccess(
+        data.emailSent
+          ? `Customer account created for ${data.user.name} — welcome email sent`
+          : `Customer account created for ${data.user.name} (welcome email could not be sent)`,
+      )
       setNewCustomer({ name: '', email: '', password: '' })
       setTimeout(() => setSuccess(''), 8000)
     } catch (err) {
@@ -415,7 +420,11 @@ export default function AdminPage() {
             {createdCustomer && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                 <h3 className="font-display text-lg font-bold text-amber-900 mb-2">Customer credentials — copy now</h3>
-                <p className="text-amber-800 text-sm mb-4">Share these login details with the customer. The password is shown only once.</p>
+                <p className="text-amber-800 text-sm mb-4">
+                  Share these login details with the customer. The password is shown only once.
+                  {createdCustomer.emailSent === true && ' A welcome email was also sent.'}
+                  {createdCustomer.emailSent === false && ' Welcome email failed — share these credentials manually.'}
+                </p>
                 <dl className="space-y-2 text-sm">
                   <div className="flex flex-wrap gap-2">
                     <dt className="font-semibold text-amber-900 w-24">Name</dt>

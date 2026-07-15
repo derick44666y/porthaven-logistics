@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { parseBody } from '../utils/validation.js'
+import { sendWelcomeEmail } from '../utils/email.js'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -38,6 +39,16 @@ router.post('/users', async (req: Request, res: Response) => {
       },
     })
 
+    // Fire-and-forget welcome email; account creation still succeeds if email fails
+    const emailResult = await sendWelcomeEmail({
+      to: body.email,
+      name: body.name,
+      password: body.password,
+    })
+    if (!emailResult.ok) {
+      console.warn(`Welcome email failed for ${body.email}: ${emailResult.error}`)
+    }
+
     res.status(201).json({
       user: {
         id: user.id,
@@ -50,6 +61,7 @@ router.post('/users', async (req: Request, res: Response) => {
         email: body.email,
         password: body.password,
       },
+      emailSent: emailResult.ok,
     })
   } catch (err) {
     console.error('Create customer error:', err)

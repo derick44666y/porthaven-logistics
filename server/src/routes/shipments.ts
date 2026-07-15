@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { parseBody } from '../utils/validation.js'
+import { sendStatusUpdateEmail } from '../utils/email.js'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -170,11 +171,16 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
     const body = parseBody(createEventSchema, req.body, res)
     if (!body) return
 
-    const shipment = await prisma.shipment.findUnique({ where: { id } })
+    const shipment = await prisma.shipment.findUnique({
+      where: { id },
+      include: { customer: true },
+    })
     if (!shipment) {
       res.status(404).json({ error: 'Shipment not found' })
       return
     }
+
+    const statusChanged = shipment.status !== body.status
 
     const event = await prisma.trackingEvent.create({
       data: {
@@ -191,6 +197,21 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
       where: { id },
       data: { status: body.status },
     })
+
+    // Notify linked customer when status actually changes
+    if (statusChanged && shipment.customer?.email) {
+      const emailResult = await sendStatusUpdateEmail({
+        to: shipment.customer.email,
+        customerName: shipment.customer.name,
+        trackingNumber: shipment.trackingNumber,
+        status: body.status,
+        location: body.location,
+        note: body.note || '',
+      })
+      if (!emailResult.ok) {
+        console.warn(`Status email failed for ${shipment.trackingNumber}: ${emailResult.error}`)
+      }
+    }
 
     res.status(201).json({ event })
   } catch (err) {

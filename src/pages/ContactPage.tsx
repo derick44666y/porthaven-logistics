@@ -1,12 +1,92 @@
+import { useState, type FormEvent } from 'react'
+import { submitContactForm } from '@/api'
+
 export default function ContactPage() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setStatus('sending')
+    setError('')
+    try {
+      await submitContactForm({ name, email, message })
+      setStatus('ok')
+      setName('')
+      setEmail('')
+      setMessage('')
+    } catch (err) {
+      setStatus('error')
+      setError(err instanceof Error ? err.message : 'Failed to send message')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate py-12 px-5 md:px-6">
-      <div className="max-w-2xl mx-auto text-center">
-        <h1 className="font-display text-4xl md:text-5xl font-bold text-navy mb-3">Get In Touch</h1>
-        <p className="text-slate-500 text-sm md:text-base mb-10">Reach out and we'll handle the rest.</p>
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-navy mb-3">Get In Touch</h1>
+          <p className="text-slate-500 text-sm md:text-base">Reach out and we'll handle the rest.</p>
+        </div>
 
-        <div className="space-y-4">
-          {/* WhatsApp CTA */}
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8 space-y-4 mb-8">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Name *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Your name"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email *</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Message *</label>
+            <textarea
+              required
+              minLength={10}
+              rows={5}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="How can we help?"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky resize-none"
+            />
+          </div>
+
+          {status === 'ok' && (
+            <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-xl">
+              Message sent — we'll get back to you soon.
+            </div>
+          )}
+          {status === 'error' && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>
+          )}
+
+          <button
+            type="submit"
+            disabled={status === 'sending'}
+            className="w-full bg-navy hover:bg-navy-mid disabled:opacity-60 text-white py-3.5 rounded-xl font-bold text-base transition-colors"
+          >
+            {status === 'sending' ? 'Sending…' : 'Send message'}
+          </button>
+        </form>
+
+        <div className="space-y-4 text-center">
           <a
             href="https://wa.me/19515896129"
             target="_blank"
@@ -18,16 +98,6 @@ export default function ContactPage() {
             <span className="text-sm font-normal opacity-80">+1 (951) 589-6129</span>
           </a>
 
-          {/* Email CTA */}
-          <a
-            href="mailto:info@porthavendelivery.com"
-            className="flex items-center justify-center gap-4 bg-navy hover:bg-navy-mid text-white py-5 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
-          >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            info@porthavendelivery.com
-          </a>
-
-          {/* Address */}
           <div className="flex items-center justify-center gap-3 bg-white rounded-2xl py-5 px-4 border border-slate-100 text-navy">
             <svg className="w-6 h-6 text-ember" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span className="font-medium">380 St Kilda Road, Australia</span>

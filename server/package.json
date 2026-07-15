@@ -12,7 +12,8 @@
     "db:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
     "seed:admin": "tsx prisma/seedAdmin.ts",
-    "seed:demo": "tsx prisma/seedDemo.ts"
+    "seed:demo": "tsx prisma/seedDemo.ts",
+    "test:email": "tsx prisma/testEmail.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -31,6 +32,7 @@
     "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.19.3",
+    "resend": "^6.17.2",
     "typescript": "^5.7.0",
     "zod": "^4.4.3"
   },

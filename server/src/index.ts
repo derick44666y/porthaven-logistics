@@ -5,6 +5,8 @@ import authRoutes from './routes/auth.js'
 import shipmentRoutes from './routes/shipments.js'
 import locationRoutes from './routes/locations.js'
 import adminRoutes from './routes/admin.js'
+import contactRoutes from './routes/contact.js'
+import { logEmailConfigStatus } from './utils/email.js'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -34,6 +36,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/shipments', shipmentRoutes)
 app.use('/api/locations', locationRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/contact', contactRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -43,4 +46,5 @@ app.get('/api/health', (_req, res) => {
 app.listen(PORT, () => {
   console.log(`Porthaven server running on http://localhost:${PORT}`)
   console.log(`CORS allowed origins: ${ALLOWED_ORIGINS.join(', ') || '(none)'}`)
+  logEmailConfigStatus()
 })
