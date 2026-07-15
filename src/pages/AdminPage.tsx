@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
+import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
 import StatusBadge from '@/components/StatusBadge'
 import ModeIcon from '@/components/ModeIcon'
 
@@ -24,6 +24,24 @@ export default function AdminPage() {
   })
   const [createdShipment, setCreatedShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Location autocomplete
+  const [locationSuggestions, setLocationSuggestions] = useState<Location[]>([])
+  const [showLocationSuggest, setShowLocationSuggest] = useState(false)
+
+  useEffect(() => {
+    const q = newEvent.location.trim()
+    if (q.length < 2) {
+      setLocationSuggestions([])
+      return
+    }
+    const t = setTimeout(() => {
+      searchLocations(q, 8)
+        .then(setLocationSuggestions)
+        .catch(() => setLocationSuggestions([]))
+    }, 250)
+    return () => clearTimeout(t)
+  }, [newEvent.location])
 
   useEffect(() => {
     getMyShipments()
@@ -319,11 +337,28 @@ export default function AdminPage() {
               </select>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Location *</label>
-              <input type="text" required value={newEvent.location} onChange={e => setNewEvent(p => ({ ...p, location: e.target.value }))}
-                placeholder="e.g. JFK International Airport, New York"
+              <input type="text" required autoComplete="off" value={newEvent.location}
+                onChange={e => { setNewEvent(p => ({ ...p, location: e.target.value })); setShowLocationSuggest(true) }}
+                onFocus={() => setShowLocationSuggest(true)}
+                onBlur={() => setTimeout(() => setShowLocationSuggest(false), 150)}
+                placeholder="Type a city, e.g. London"
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" />
+              {showLocationSuggest && locationSuggestions.length > 0 && (
+                <ul className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-auto">
+                  {locationSuggestions.map(loc => (
+                    <li key={loc.id}>
+                      <button type="button"
+                        onMouseDown={() => { setNewEvent(p => ({ ...p, location: `${loc.city}, ${loc.country}` })); setShowLocationSuggest(false) }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-sky-light transition-colors">
+                        <span className="font-medium text-navy">{loc.city}</span>
+                        <span className="text-slate-400">, {loc.country}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div>

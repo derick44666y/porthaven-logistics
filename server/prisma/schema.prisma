@@ -69,3 +69,18 @@ model TrackingEvent {
 
   @@map("tracking_events")
 }
+
+model Location {
+  id        String  @id @default(cuid())
+  name      String
+  city      String
+  country   String
+  type      String  @default("CITY")
+  latitude  Float?
+  longitude Float?
+
+  @@map("locations")
+  @@index([name])
+  @@index([city])
+  @@index([country])
+}

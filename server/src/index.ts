@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.js'
 import shipmentRoutes from './routes/shipments.js'
+import locationRoutes from './routes/locations.js'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -28,6 +29,7 @@ app.use(express.json())
 // Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/shipments', shipmentRoutes)
+app.use('/api/locations', locationRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

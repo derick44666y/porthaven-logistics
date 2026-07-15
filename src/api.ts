@@ -212,3 +212,32 @@ export const STATUS_META: Record<ShipmentStatus, { color: string; bg: string; do
   DELIVERED:          { color: 'text-green-700',   bg: 'bg-green-100',   dot: 'bg-green-500',   icon: '✅' },
   EXCEPTION:          { color: 'text-red-700',     bg: 'bg-red-100',     dot: 'bg-red-500',     icon: '⚠️' },
 }
+
+// ─── Locations (autocomplete for shipment event location) ──────────────────
+
+export interface Location {
+  id: string
+  name: string
+  city: string
+  country: string
+  type: string
+}
+
+let locationsAbort: AbortController | null = null
+
+export async function searchLocations(query: string, limit = 20): Promise<Location[]> {
+  if (!query.trim()) return []
+  if (locationsAbort) locationsAbort.abort()
+  locationsAbort = new AbortController()
+  try {
+    const res = await fetch(`${BASE_URL}${API_PREFIX}/locations?search=${encodeURIComponent(query)}&limit=${limit}`, {
+      signal: locationsAbort.signal,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to load locations')
+    return (data.locations as Location[]) || []
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') return []
+    throw err
+  }
+}
