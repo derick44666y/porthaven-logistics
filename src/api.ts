@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || ''
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://porthaven-logistics.onrender.com'
 const API_PREFIX = '/api'
 
 export interface User {

@@ -1,6 +1,13 @@
 import jwt from 'jsonwebtoken'
 
-const SECRET = process.env.JWT_SECRET || 'fallback-dev-secret-do-not-use-in-production'
+const rawSecret = process.env.JWT_SECRET
+
+if (process.env.NODE_ENV === 'production' && !rawSecret) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required in production')
+}
+
+// Non-null for TypeScript; in production the guard above guarantees it is set.
+const SECRET: string = rawSecret || 'dev-only-insecure-secret'
 
 export interface JwtPayload {
   userId: string
