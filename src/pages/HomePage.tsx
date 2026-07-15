@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import SplashIntro from '../components/SplashIntro'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -84,6 +85,9 @@ export default function HomePage() {
 
   return (
     <div>
+      {/* Branded intro splash — plays once per session on first homepage load */}
+      <SplashIntro />
+
       {/* ─── Hero ─────────────────────────────────────────── */}
       <section className="relative min-h-[88vh] md:min-h-[680px] flex items-center overflow-hidden">
         {/* Background image — verified working, always visible */}

@@ -118,3 +118,102 @@ input, textarea, select, button {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ─── Branded intro splash ─────────────────────────────────────────── */
+/* Logo gently scales up and its glow brightens over ~1.3s, then the
+   overlay fades out (handled via React state + opacity transition). */
+
+@keyframes splashPulse {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.4;
+    box-shadow: 0 0 24px 6px rgba(29, 143, 218, 0.35),
+                0 0 60px 12px rgba(29, 143, 218, 0.18);
+  }
+  55% {
+    transform: scale(1.08);
+    opacity: 1;
+    box-shadow: 0 0 48px 14px rgba(29, 143, 218, 0.85),
+                0 0 120px 40px rgba(29, 143, 218, 0.45);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 36px 10px rgba(29, 143, 218, 0.6),
+                0 0 90px 28px rgba(29, 143, 218, 0.3);
+  }
+}
+
+@keyframes splashRadial {
+  0%   { opacity: 0; transform: scale(0.6); }
+  50%  { opacity: 0.9; transform: scale(1.15); }
+  100% { opacity: 0.55; transform: scale(1); }
+}
+
+.splash-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Soft animated radial glow behind the logo */
+.splash-logo-wrap::before {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(29, 143, 218, 0.55) 0%, rgba(29, 143, 218, 0.12) 45%, transparent 70%);
+  filter: blur(6px);
+  animation: splashRadial 1.3s ease-out both;
+  z-index: 0;
+}
+
+.splash-logo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: splashPulse 1.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1d8fda, #152641);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 30px;
+  letter-spacing: 0.5px;
+}
+
+.splash-word {
+  margin-top: 16px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: 1px;
+}
+
+.splash-sub {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .splash-logo,
+  .splash-logo-wrap::before {
+    animation: none;
+  }
+}
