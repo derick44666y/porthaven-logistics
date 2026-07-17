@@ -41,8 +41,36 @@ const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:8443')
   .map(o => o.trim())
   .filter(Boolean)
 
+// Also allow any origin whose host matches the configured production SITE_URL
+// (e.g. the frontend is served from the production domain but FRONTEND_URL
+// wasn't updated to include the exact origin). This prevents "load failed"
+// CORS errors on the admin login without opening up to arbitrary origins.
+function siteUrlHost(): string | null {
+  const site = process.env.SITE_URL?.trim()
+  if (!site) return null
+  try {
+    return new URL(site).host
+  } catch {
+    return null
+  }
+}
+
+const ALLOWED_SITE_HOST = siteUrlHost()
+
+function originAllowed(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  if (ALLOWED_SITE_HOST) {
+    try {
+      return new URL(origin).host === ALLOWED_SITE_HOST
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
 function corsOrigin(origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) {
-  if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+  if (!origin || originAllowed(origin)) {
     cb(null, true)
   } else {
     cb(null, false)
