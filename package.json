@@ -10,6 +10,10 @@
     "format": "oxfmt"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "helmet": "^8.3.0",
+    "pdfkit": "^0.19.1",
+    "prisma": "^6.19.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.1"
@@ -17,6 +21,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",

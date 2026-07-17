@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
+import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, downloadInvoice, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
 import StatusBadge from '@/components/StatusBadge'
 import ModeIcon from '@/components/ModeIcon'
 
@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [success, setSuccess] = useState('')
   const [newShipment, setNewShipment] = useState({
-    senderName: '', receiverName: '', origin: '', destination: '', mode: 'AIR' as 'AIR' | 'SEA', customerId: null as string | null, estimatedDelivery: ''
+    senderName: '', receiverName: '', origin: '', destination: '', mode: 'AIR' as 'AIR' | 'SEA', customerId: null as string | null, amount: '' as string | number, currency: 'USD', estimatedDelivery: ''
   })
   const [editShipment, setEditShipment] = useState<Shipment | null>(null)
   const [editForm, setEditForm] = useState({
@@ -66,7 +66,7 @@ export default function AdminPage() {
       const data = await apiCreateShipment({ ...newShipment, estimatedDelivery: newShipment.estimatedDelivery + 'T00:00:00.000Z' })
       setCreatedShipment(data.shipment)
       setSuccess(`Shipment created! Tracking: ${data.shipment.trackingNumber}`)
-      setNewShipment({ senderName: '', receiverName: '', origin: '', destination: '', mode: 'AIR', customerId: null, estimatedDelivery: '' })
+      setNewShipment({ senderName: '', receiverName: '', origin: '', destination: '', mode: 'AIR', customerId: null, amount: '', currency: 'USD', estimatedDelivery: '' })
       setTimeout(() => setSuccess(''), 8000)
     } catch (err) {
       setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to create shipment'}`)
@@ -125,6 +125,24 @@ export default function AdminPage() {
       setTimeout(() => setSuccess(''), 4000)
     } catch (err) {
       setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to delete shipment'}`)
+    }
+  }
+
+  async function handleDownloadInvoice(id: string) {
+    try {
+      const blob = await downloadInvoice(id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setSuccess('Invoice downloaded')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to download invoice'}`)
     }
   }
 
@@ -273,6 +291,11 @@ export default function AdminPage() {
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         Edit
                       </button>
+                      <button onClick={() => handleDownloadInvoice(s.id)}
+                        className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 text-xs font-semibold transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Invoice
+                      </button>
                       <button onClick={() => handleDeleteShipment(s.id)}
                         className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 text-xs font-semibold transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -334,6 +357,24 @@ export default function AdminPage() {
                 <input type="date" required value={newShipment.estimatedDelivery.slice(0, 10)}
                   onChange={e => setNewShipment(p => ({ ...p, estimatedDelivery: e.target.value }))}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base bg-white focus:outline-none focus:ring-2 focus:ring-sky" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (optional)</label>
+                <input type="number" min="0" step="0.01" value={newShipment.amount as string}
+                  onChange={e => setNewShipment(p => ({ ...p, amount: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base bg-white focus:outline-none focus:ring-2 focus:ring-sky" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Currency</label>
+                <select value={newShipment.currency} onChange={e => setNewShipment(p => ({ ...p, currency: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base bg-white focus:outline-none focus:ring-2 focus:ring-sky">
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CNY">CNY</option>
+                  <option value="NGN">NGN</option>
+                </select>
               </div>
             </div>
 

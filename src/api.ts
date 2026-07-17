@@ -197,6 +197,20 @@ export async function deleteShipment(shipmentId: string): Promise<{ message: str
   return request<{ message: string }>('DELETE', `/shipments/${shipmentId}`, undefined, true)
 }
 
+export async function downloadInvoice(id: string): Promise<Blob> {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}${API_PREFIX}/invoice/${id}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: 'Failed to download invoice' }))
+    throw new Error(data.error || `Request failed with status ${res.status}`)
+  }
+  return res.blob()
+}
+
 // ─── Status helpers ─────────────────────────────────────────────────────────
 
 export const ALL_STATUSES: ShipmentStatus[] = [

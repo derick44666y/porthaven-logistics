@@ -31,6 +31,8 @@ const createShipmentSchema = z.object({
   destination: trimmedText,
   mode: modeSchema,
   customerId: z.string().trim().min(1).max(128).optional().nullable(),
+  amount: z.coerce.number().nonnegative().optional().nullable(),
+  currency: z.string().trim().min(1).max(3).optional().default('USD'),
   estimatedDelivery: dateInput,
 })
 
@@ -141,6 +143,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Resp
         destination: body.destination,
         mode: body.mode,
         customerId: body.customerId || null,
+        amount: body.amount ?? null,
+        currency: body.currency || 'USD',
         estimatedDelivery: body.estimatedDelivery,
         status: 'ORDER_CREATED',
       },

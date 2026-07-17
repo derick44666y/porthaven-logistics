@@ -7,6 +7,7 @@ import shipmentRoutes from './routes/shipments.js'
 import locationRoutes from './routes/locations.js'
 import adminRoutes from './routes/admin.js'
 import contactRoutes from './routes/contact.js'
+import invoiceRoutes from './routes/invoice.js'
 import { logEmailConfigStatus, isEmailConfigured, getEmailConfigFlags } from './utils/email.js'
 import { ensureAdminAccount } from './bootstrap.js'
 import { PrismaClient } from '@prisma/client'
@@ -60,6 +61,7 @@ app.use('/api/shipments', shipmentRoutes)
 app.use('/api/locations', locationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/contact', contactRoutes)
+app.use('/api/invoice', invoiceRoutes)
 
 // Health check
 app.get('/api/health', async (_req, res) => {
