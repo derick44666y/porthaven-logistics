@@ -46,15 +46,8 @@ export default function Navbar({ user, onAuthChange }: { user: User | null; onAu
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
-              <div className="h-10 w-10 bg-gradient-to-br from-ember to-orange-500 rounded flex items-center justify-center text-white font-display font-bold text-lg">
-                PH
-              </div>
-              <div className="leading-none">
-                <span className="font-display text-xl font-bold text-white tracking-wide">PORT</span>
-                <span className="font-display text-xl font-bold text-ember tracking-wide">HAVEN</span>
-                <div className="text-[9px] text-slate-400 tracking-widest uppercase font-medium -mt-0.5">Delivering Trust. Delivering More.</div>
-              </div>
+            <Link to="/" className="flex items-center flex-shrink-0 py-1">
+              <img src="/logo.jpg" alt="PortHaven Logo" className="h-12 md:h-14 w-auto object-contain rounded" />
             </Link>
 
             {/* Desktop nav */}

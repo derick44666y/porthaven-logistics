@@ -7,15 +7,8 @@ export default function Footer() {
         <div className="flex flex-col md:grid md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-2 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2.5 mb-4">
-              <div className="h-10 w-10 bg-gradient-to-br from-ember to-orange-500 rounded flex items-center justify-center text-white font-display font-bold text-lg">
-                PH
-              </div>
-              <div>
-                <span className="font-display text-xl font-bold text-white">PORT</span>
-                <span className="font-display text-xl font-bold text-ember">HAVEN</span>
-                <div className="text-[9px] text-slate-400 tracking-widest uppercase">Delivering Trust. Delivering More.</div>
-              </div>
+            <div className="flex items-center justify-center md:justify-start mb-4">
+              <img src="/logo.jpg" alt="PortHaven Logo" className="h-12 md:h-16 w-auto object-contain rounded" />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto md:mx-0">
               International air and sea freight specialists. Connecting businesses and families across continents with reliable, trackable logistics.
