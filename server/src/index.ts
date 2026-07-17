@@ -8,6 +8,7 @@ import locationRoutes from './routes/locations.js'
 import adminRoutes from './routes/admin.js'
 import contactRoutes from './routes/contact.js'
 import { logEmailConfigStatus, isEmailConfigured, getEmailConfigFlags } from './utils/email.js'
+import { ensureAdminAccount } from './bootstrap.js'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -118,8 +119,18 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
-app.listen(PORT, () => {
-  console.log(`Porthaven server running on http://localhost:${PORT}`)
-  console.log(`CORS allowed origins: ${ALLOWED_ORIGINS.join(', ') || '(none)'}`)
-  logEmailConfigStatus()
-})
+async function start() {
+  try {
+    await ensureAdminAccount(prisma)
+  } catch (err) {
+    console.error('Admin provisioning failed:', err)
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Porthaven server running on http://localhost:${PORT}`)
+    console.log(`CORS allowed origins: ${ALLOWED_ORIGINS.join(', ') || '(none)'}`)
+    logEmailConfigStatus()
+  })
+}
+
+start()
