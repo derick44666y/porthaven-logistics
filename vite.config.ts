@@ -2,8 +2,22 @@ import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import { existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 
-import siteConfiguration from './.figma/make/site.json'
+// Load Figma site configuration only when present (it is a Figma-sandbox
+// artifact and must not break production builds when the file is absent).
+function loadFigmaSiteConfig(): FigmaSiteConfiguration {
+  const configPath = path.resolve(__dirname, './.figma/make/site.json')
+  if (!existsSync(configPath)) return {}
+  try {
+    return JSON.parse(readFileSync(configPath, 'utf-8')) as FigmaSiteConfiguration
+  } catch {
+    return {}
+  }
+}
+
+const siteConfiguration = loadFigmaSiteConfig()
 
 const isFigmaSandbox = process.env.FIGMA === '1' || process.env.FIGMA === 'true'
 

@@ -156,7 +156,7 @@ export default function HomePage() {
           <p className="text-slate-500 text-sm md:text-lg max-w-xl mx-auto">Full-service international logistics with transparency at every step.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 relative z-10">
-          {features.map((f, i) => (
+          {features.map((f) => (
             <div key={f.title} className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 hover:shadow-md active:scale-[0.98] transition-all scroll-animate">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-ember-light flex items-center justify-center text-xl md:text-2xl mb-3 md:mb-4">{f.icon}</div>
               <h3 className="font-display text-lg md:text-xl font-bold text-navy mb-1.5 md:mb-2">{f.title}</h3>
