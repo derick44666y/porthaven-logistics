@@ -1,4 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://porthaven-logistics.onrender.com'
+// Normalize the base URL so a VITE_API_URL that already ends with "/api"
+// (e.g. "https://...onrender.com/api") doesn't produce a doubled "/api/api/".
+const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'https://porthaven-logistics.onrender.com'
+const BASE_URL = RAW_BASE_URL.replace(/\/api\/?$/, '')
 const API_PREFIX = '/api'
 
 export interface User {
