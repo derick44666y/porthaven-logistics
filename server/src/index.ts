@@ -42,32 +42,30 @@ const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:8443')
   .map(o => o.trim())
   .filter(Boolean)
 
-// Also allow any origin whose host matches the configured production SITE_URL
-// (e.g. the frontend is served from the production domain but FRONTEND_URL
-// wasn't updated to include the exact origin). This prevents "load failed"
-// CORS errors on the admin login without opening up to arbitrary origins.
-function siteUrlHost(): string | null {
-  const site = process.env.SITE_URL?.trim()
-  if (!site) return null
+// Hosts derived from FRONTEND_URL and SITE_URL. Any origin whose host matches
+// one of these is allowed (scheme-insensitive: http or https). This prevents
+// "load failed" CORS errors on mobile where the request may arrive over http
+// (e.g. before an https upgrade) or from a configured production domain.
+function hostOf(url: string): string | null {
   try {
-    return new URL(site).host
+    return new URL(url).host
   } catch {
     return null
   }
 }
 
-const ALLOWED_SITE_HOST = siteUrlHost()
+const ALLOWED_HOSTS = new Set<string>()
+for (const origin of ALLOWED_ORIGINS) {
+  const h = hostOf(origin)
+  if (h) ALLOWED_HOSTS.add(h)
+}
+const siteHost = hostOf(process.env.SITE_URL?.trim() || '')
+if (siteHost) ALLOWED_HOSTS.add(siteHost)
 
 function originAllowed(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true
-  if (ALLOWED_SITE_HOST) {
-    try {
-      return new URL(origin).host === ALLOWED_SITE_HOST
-    } catch {
-      return false
-    }
-  }
-  return false
+  const h = hostOf(origin)
+  return h ? ALLOWED_HOSTS.has(h) : false
 }
 
 function corsOrigin(origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) {
