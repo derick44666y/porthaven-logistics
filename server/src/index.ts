@@ -7,6 +7,9 @@ import locationRoutes from './routes/locations.js'
 import adminRoutes from './routes/admin.js'
 import contactRoutes from './routes/contact.js'
 import { logEmailConfigStatus, isEmailConfigured, getEmailConfigFlags } from './utils/email.js'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -39,9 +42,18 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/contact', contactRoutes)
 
 // Health check
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', async (_req, res) => {
+  let dbStatus = 'ok'
+  try {
+    await prisma.$queryRaw`SELECT 1`
+  } catch (error) {
+    dbStatus = 'error'
+    console.error('Database health check failed:', error)
+  }
+
   res.json({
     status: 'ok',
+    db: dbStatus,
     timestamp: new Date().toISOString(),
     email: getEmailConfigFlags(),
   })
