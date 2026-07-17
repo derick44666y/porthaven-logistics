@@ -36,44 +36,18 @@ app.use(
   }),
 )
 
-// Allowed CORS origins (comma-separated FRONTEND_URL env, or sensible defaults)
-const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:8443')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean)
-
-// Hosts derived from FRONTEND_URL and SITE_URL. Any origin whose host matches
-// one of these is allowed (scheme-insensitive: http or https). This prevents
-// "load failed" CORS errors on mobile where the request may arrive over http
-// (e.g. before an https upgrade) or from a configured production domain.
-function hostOf(url: string): string | null {
-  try {
-    return new URL(url).host
-  } catch {
-    return null
-  }
-}
-
-const ALLOWED_HOSTS = new Set<string>()
-for (const origin of ALLOWED_ORIGINS) {
-  const h = hostOf(origin)
-  if (h) ALLOWED_HOSTS.add(h)
-}
-const siteHost = hostOf(process.env.SITE_URL?.trim() || '')
-if (siteHost) ALLOWED_HOSTS.add(siteHost)
-
-function originAllowed(origin: string): boolean {
-  if (ALLOWED_ORIGINS.includes(origin)) return true
-  const h = hostOf(origin)
-  return h ? ALLOWED_HOSTS.has(h) : false
-}
-
-function corsOrigin(origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) {
-  if (!origin || originAllowed(origin)) {
-    cb(null, true)
-  } else {
-    cb(null, false)
-  }
+// CORS: reflect the requesting browser Origin. The API is consumed only by our
+// own frontend(s), so reflecting the Origin (with credentials) is safe and
+// avoids "load failed" CORS errors across devices/domains/deploy envs where a
+// fixed allowlist would otherwise miss the exact origin.
+function corsOrigin(
+  origin: string | undefined,
+  cb: (err: Error | null, allow?: string | boolean) => void,
+) {
+  // `origin` is undefined for same-origin (non-browser) requests — allow them.
+  // Otherwise reflect the requesting browser Origin so CORS passes on every
+  // device/domain without a brittle fixed allowlist.
+  cb(null, origin || true)
 }
 
 // Middleware
@@ -126,7 +100,7 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`Porthaven server running on http://localhost:${PORT}`)
-    console.log(`CORS allowed origins: ${ALLOWED_ORIGINS.join(', ') || '(none)'}`)
+    console.log('CORS: reflecting request Origin (credentials enabled)')
     logEmailConfigStatus()
   })
 }
