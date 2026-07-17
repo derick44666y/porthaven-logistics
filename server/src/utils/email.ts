@@ -233,6 +233,56 @@ export async function sendWelcomeEmail(params: {
   })
 }
 
+export async function sendShipmentCreatedEmail(params: {
+  to: string
+  customerName: string
+  trackingNumber: string
+  senderName: string
+  receiverName: string
+  origin: string
+  destination: string
+  mode: string
+  estimatedDelivery: string
+}): Promise<{ ok: boolean; error?: string }> {
+  const trackUrl = `${getSiteUrl()}/track/${encodeURIComponent(params.trackingNumber)}`
+  const modeLabel = params.mode === 'AIR' ? 'Air Freight' : 'Sea Freight'
+  const subject = `Your shipment is booked — ${params.trackingNumber}`
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:${COLORS.navy};">Shipment booked</h1>
+    <p style="margin:0 0 20px;color:${COLORS.muted};font-size:15px;">Hi ${escapeHtml(params.customerName)}, your shipment has been created and is now being processed.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.slate};border-radius:12px;margin-bottom:24px;">
+      <tr><td style="padding:16px 20px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">Tracking number</div>
+        <div style="font-family:monospace;font-size:18px;font-weight:700;color:${COLORS.navy};margin-top:4px;">${escapeHtml(params.trackingNumber)}</div>
+      </td></tr>
+      <tr><td style="padding:0 20px 16px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">Service</div>
+        <div style="font-size:15px;font-weight:600;color:${COLORS.navy};margin-top:4px;">${escapeHtml(modeLabel)}</div>
+      </td></tr>
+      <tr><td style="padding:0 20px 16px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">From → To</div>
+        <div style="font-size:15px;font-weight:600;color:${COLORS.navy};margin-top:4px;">${escapeHtml(params.origin)} → ${escapeHtml(params.destination)}</div>
+      </td></tr>
+      <tr><td style="padding:0 20px 16px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">Receiver</div>
+        <div style="font-size:15px;font-weight:600;color:${COLORS.navy};margin-top:4px;">${escapeHtml(params.receiverName)}</div>
+      </td></tr>
+      <tr><td style="padding:0 20px 16px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">Estimated delivery</div>
+        <div style="font-size:15px;font-weight:600;color:${COLORS.navy};margin-top:4px;">${escapeHtml(params.estimatedDelivery)}</div>
+      </td></tr>
+    </table>
+    <a href="${trackUrl}" style="display:inline-block;background:${COLORS.ember};color:${COLORS.white};text-decoration:none;font-weight:700;padding:14px 24px;border-radius:12px;font-size:15px;">Track your shipment</a>
+    <p style="margin:20px 0 0;font-size:13px;color:${COLORS.muted};">Or open: <a href="${trackUrl}" style="color:${COLORS.sky};">${trackUrl}</a></p>
+  `
+
+  return sendEmail({
+    to: params.to,
+    subject,
+    html: brandedShell(subject, body),
+  })
+}
+
 export async function sendContactFormEmail(params: {
   name: string
   email: string

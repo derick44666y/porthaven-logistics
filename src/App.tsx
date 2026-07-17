@@ -36,7 +36,7 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           {/* Login is internal/admin only — no public signup */}
           <Route path="/login" element={
-            user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace /> : <AuthPage />
+            user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace /> : <AuthPage onAuthChange={refreshUser} />
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute requiredRole="CUSTOMER">

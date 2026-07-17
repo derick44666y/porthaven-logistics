@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { parseBody } from '../utils/validation.js'
-import { sendStatusUpdateEmail } from '../utils/email.js'
+import { sendStatusUpdateEmail, sendShipmentCreatedEmail } from '../utils/email.js'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -156,6 +156,27 @@ router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Resp
         timestamp: new Date(),
       },
     })
+
+    // Notify the linked customer that their shipment was created
+    if (shipment.customerId) {
+      const customer = await prisma.user.findUnique({ where: { id: shipment.customerId } })
+      if (customer?.email) {
+        const emailResult = await sendShipmentCreatedEmail({
+          to: customer.email,
+          customerName: customer.name,
+          trackingNumber: shipment.trackingNumber,
+          senderName: shipment.senderName,
+          receiverName: shipment.receiverName,
+          origin: shipment.origin,
+          destination: shipment.destination,
+          mode: shipment.mode,
+          estimatedDelivery: shipment.estimatedDelivery.toISOString().slice(0, 10),
+        })
+        if (!emailResult.ok) {
+          console.warn(`Shipment-created email failed for ${shipment.trackingNumber}: ${emailResult.error}`)
+        }
+      }
+    }
 
     res.status(201).json({ shipment })
   } catch (err) {

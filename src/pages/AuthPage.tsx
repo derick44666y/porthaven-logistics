@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login as apiLogin } from '@/api'
 
-export default function AuthPage() {
+export default function AuthPage({ onAuthChange }: { onAuthChange?: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,6 +16,7 @@ export default function AuthPage() {
 
     try {
       const data = await apiLogin(email, password)
+      onAuthChange?.()
       navigate(data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
