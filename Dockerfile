@@ -16,8 +16,8 @@ COPY server/requirements.txt ./server/
 RUN npm install
 RUN cd server && npm install
 
-# Install Python dependencies
-RUN cd server && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+# Install Python dependencies globally
+RUN pip3 install --break-system-packages -r server/requirements.txt
 
 # Copy source code
 COPY . .
