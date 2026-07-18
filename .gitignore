@@ -43,5 +43,9 @@ Thumbs.db
 .figma/
 
 
-#Ignore cursor AI rules
+# Ignore cursor AI rules
 .cursor\rules\codacy.mdc
+
+# Python Virtual Environments
+.venv/
+venv/
