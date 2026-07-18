@@ -114,7 +114,8 @@ def generate_pdf(data, output_path):
     bill_to = data['billTo']
     shipment = data['shipment']
     
-    bill_to_text = f"<font color='#152641'><b>BILL TO</b></font><br/><b>{bill_to['name']}</b><br/>{bill_to['email']}<br/>{bill_to['address'].replace('\n', '<br/>')}"
+    bill_to_address = bill_to['address'].replace('\n', '<br/>')
+    bill_to_text = f"<font color='#152641'><b>BILL TO</b></font><br/><b>{bill_to['name']}</b><br/>{bill_to['email']}<br/>{bill_to_address}"
     
     shipment_text = f"<font color='#152641'><b>SHIPMENT SUMMARY</b></font><br/>" \
                     f"<b>Tracking:</b> {shipment['trackingNumber']}<br/>" \
