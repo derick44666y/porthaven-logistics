@@ -7,6 +7,10 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -53,6 +57,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
       path.join(process.cwd(), 'server', 'src', 'invoice_generator.py'),
       path.join(process.cwd(), 'src', 'invoice_generator.py'),
       path.join(__dirname, '..', 'invoice_generator.py'),
+      path.join(__dirname, 'invoice_generator.py'),
     ]
     let scriptPath = possibleScriptPaths[0]
     for (const script of possibleScriptPaths) {
@@ -66,7 +71,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     if (!fs.existsSync(scriptPath)) {
       console.error(`Invoice script not found at: ${scriptPath}`)
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Invoice generation not available - Python script missing' })
+        res.status(500).json({ error: 'Python script missing', scriptPath, cwd: process.cwd() })
       }
       return
     }
@@ -85,7 +90,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
       if (code !== 0) {
         console.error(`Python script failed with exit code ${code}. Stderr: ${stderr}`)
         if (!res.headersSent) {
-          res.status(500).json({ error: `Failed to generate PDF: ${stderr || 'Python script error'}` })
+          res.status(500).json({ error: `PDF generation failed`, detail: stderr || 'no stderr', pythonPath, scriptPath })
         }
         return
       }
