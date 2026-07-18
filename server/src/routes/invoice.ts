@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
+import PDFDocument from 'pdfkit'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { buildInvoice } from '../utils/invoice.js'
 import { renderInvoicePdf } from '../utils/pdf.js'
@@ -24,7 +25,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     const inv = buildInvoice(shipment, shipment.customer)
     const filename = `invoice-${inv.invoiceNumber}.pdf`
 
-    const doc = new (require('pdfkit'))({ size: 'A4', margin: 50 })
+    const doc = new PDFDocument({ size: 'A4', margin: 50 })
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
     doc.pipe(res)

@@ -424,10 +424,10 @@ export default function AdminPage() {
                   {locationSuggestions.map(loc => (
                     <li key={loc.id}>
                       <button type="button"
-                        onMouseDown={() => { setNewEvent(p => ({ ...p, location: `${loc.city}, ${loc.country}` })); setShowLocationSuggest(false) }}
+                        onMouseDown={() => { setNewEvent(p => ({ ...p, location: loc.city ? `${loc.city}, ${loc.country}` : loc.country })); setShowLocationSuggest(false) }}
                         className="w-full text-left px-4 py-2.5 text-sm hover:bg-sky-light transition-colors">
-                        <span className="font-medium text-navy">{loc.city}</span>
-                        <span className="text-slate-400">, {loc.country}</span>
+                        <span className="font-medium text-navy">{loc.city || loc.country}</span>
+                        {loc.city && <span className="text-slate-400">, {loc.country}</span>}
                       </button>
                     </li>
                   ))}
