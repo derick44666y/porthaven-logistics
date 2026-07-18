@@ -63,7 +63,7 @@ model Shipment {
 model TrackingEvent {
   id         String         @id @default(cuid())
   shipmentId String         @map("shipment_id")
-  shipment   Shipment       @relation(fields: [shipmentId], references: [id])
+  shipment   Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
   status     ShipmentStatus
   location   String
   note       String         @default("")
