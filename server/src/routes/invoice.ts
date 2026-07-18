@@ -41,7 +41,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
       pythonPath = 'python3' // Fallback to system python
     }
 
-    const scriptPath = path.join(process.cwd(), 'src', 'invoice_generator.py')
+const scriptPath = path.join(__dirname, 'invoice_generator.py')
 
     // Spawn Python script to generate invoice PDF
     const py = spawn(pythonPath, [scriptPath, tempPdfPath])

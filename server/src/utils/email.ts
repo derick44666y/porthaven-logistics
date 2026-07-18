@@ -296,7 +296,7 @@ export async function sendContactFormEmail(params: {
   const subject = `Contact form: ${params.name}`
   const body = `
     <h1 style="margin:0 0 8px;font-size:22px;color:${COLORS.navy};">New contact message</h1>
-    <p style="margin:0 0 20px;color:${COLORS.muted};font-size:15px;">Someone submitted the contact form on PortHaven Logistics.</p>
+    <p style="margin:0 0 202;color:${COLORS.muted};font-size:15px;">Someone submitted the contact form on PortHaven Logistics.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.slate};border-radius:12px;margin-bottom:16px;">
       <tr><td style="padding:16px 20px;">
         <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:${COLORS.muted};">From</div>
@@ -325,9 +325,9 @@ export async function sendContactFormEmail(params: {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&')
+    .replace(/&/g, '&amp;')
     .replace(/</g, '<')
     .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 }

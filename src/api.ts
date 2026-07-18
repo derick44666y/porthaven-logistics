@@ -164,6 +164,8 @@ export async function createShipment(data: {
   destination: string
   mode: 'AIR' | 'SEA'
   customerId?: string | null
+  amount?: string | number
+  currency?: string
   estimatedDelivery: string
 }): Promise<{ shipment: Shipment }> {
   return request<{ shipment: Shipment }>('POST', '/shipments', data, true)
