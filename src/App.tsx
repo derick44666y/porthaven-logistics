@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { getCurrentUser, type User } from '@/api'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import WhatsAppWidget from '@/components/WhatsAppWidget'
 import HomePage from '@/pages/HomePage'
 import TrackPage from '@/pages/TrackPage'
 import AuthPage from '@/pages/AuthPage'
@@ -13,7 +12,6 @@ import ContactPage from '@/pages/ContactPage'
 
 export default function App() {
   const [user, setUser] = useState<User | null>(getCurrentUser())
-  const location = useLocation()
 
   const refreshUser = useCallback(() => {
     setUser(getCurrentUser())
@@ -54,7 +52,6 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      {!location.pathname.startsWith('/admin') && <WhatsAppWidget />}
     </div>
   )
 }
