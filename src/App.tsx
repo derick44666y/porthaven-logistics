@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { getCurrentUser, type User } from '@/api'
 import Navbar from '@/components/Navbar'
@@ -10,12 +10,43 @@ import DashboardPage from '@/pages/DashboardPage'
 import AdminPage from '@/pages/AdminPage'
 import ContactPage from '@/pages/ContactPage'
 
+declare global {
+  interface Window {
+    Tawk_API?: any;
+  }
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(getCurrentUser())
 
   const refreshUser = useCallback(() => {
     setUser(getCurrentUser())
   }, [])
+
+  // Auto-identify logged-in users in the Tawk.to Live Chat widget
+  useEffect(() => {
+    if (!user) return
+
+    const setTawkUser = () => {
+      if (window.Tawk_API && typeof window.Tawk_API.setAttributes === 'function') {
+        window.Tawk_API.setAttributes({
+          name: user.name,
+          email: user.email
+        }, () => {})
+      }
+    }
+
+    if (window.Tawk_API) {
+      setTawkUser()
+    } else {
+      window.Tawk_API = window.Tawk_API || {}
+      const oldOnLoad = window.Tawk_API.onLoad
+      window.Tawk_API.onLoad = function () {
+        if (typeof oldOnLoad === 'function') oldOnLoad()
+        setTawkUser()
+      }
+    }
+  }, [user])
 
   function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'CUSTOMER' | 'ADMIN' }) {
     if (!user) return <Navigate to="/login" replace />
