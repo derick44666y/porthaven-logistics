@@ -2,8 +2,7 @@ services:
   - type: web
     name: porthaven-logistics
     runtime: docker
-    buildCommand: docker build -t porthaven-logistics .
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         fromDatabase:
