@@ -21,6 +21,7 @@ RUN pip3 install --break-system-packages -r server/requirements.txt
 
 # Copy source code
 COPY . .
+COPY public/logo.jpg /app/public/logo.jpg
 
 # Build the application
 RUN npm run build

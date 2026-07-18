@@ -33,6 +33,13 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     const inv = buildInvoice(shipment, shipment.customer)
     const filename = `invoice-${inv.invoiceNumber}.pdf`
 
+    // Resolve logo path
+    const possibleLogoPaths = [
+      path.join(process.cwd(), '..', 'public', 'logo.jpg'),
+      path.join(process.cwd(), 'public', 'logo.jpg'),
+    ]
+    const logoPath = possibleLogoPaths.find(p => fs.existsSync(p)) || ''
+
     // Setup temporary PDF file path
     tempPdfPath = path.join(os.tmpdir(), `invoice-${crypto.randomBytes(8).toString('hex')}.pdf`)
 
@@ -77,7 +84,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     }
 
     // Spawn Python script to generate invoice PDF
-    const py = spawn(pythonPath, [scriptPath, tempPdfPath])
+    const py = spawn(pythonPath, [scriptPath, tempPdfPath, logoPath])
     py.stdin.write(JSON.stringify(inv))
     py.stdin.end()
 
