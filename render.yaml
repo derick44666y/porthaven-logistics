@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: porthaven-logistics
+    runtime: docker
+    buildCommand: docker build -t porthaven-logistics .
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: porthaven-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NOTIFY_FROM_EMAIL
+        sync: false
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false
+      - key: FRONTEND_URL
+        value: "https://porthaven-logistics-five.vercel.app"
+      - key: PORT
+        value: "3001"
