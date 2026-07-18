@@ -122,6 +122,10 @@ export default function AdminPage() {
     try {
       await deleteShipment(id)
       setSuccess('Shipment deleted successfully!')
+      // Refresh shipments list
+      getMyShipments()
+        .then(data => setShipments(data.shipments))
+        .catch(() => {})
       setTimeout(() => setSuccess(''), 4000)
     } catch (err) {
       setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to delete shipment'}`)

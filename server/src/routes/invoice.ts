@@ -62,6 +62,15 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
       }
     }
 
+    // Check if script exists before spawning
+    if (!fs.existsSync(scriptPath)) {
+      console.error(`Invoice script not found at: ${scriptPath}`)
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Invoice generation not available - Python script missing' })
+      }
+      return
+    }
+
     // Spawn Python script to generate invoice PDF
     const py = spawn(pythonPath, [scriptPath, tempPdfPath])
     py.stdin.write(JSON.stringify(inv))
@@ -75,7 +84,9 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     py.on('close', (code) => {
       if (code !== 0) {
         console.error(`Python script failed with exit code ${code}. Stderr: ${stderr}`)
-        if (!res.headersSent) res.status(500).json({ error: 'Failed to generate PDF' })
+        if (!res.headersSent) {
+          res.status(500).json({ error: `Failed to generate PDF: ${stderr || 'Python script error'}` })
+        }
         return
       }
 
