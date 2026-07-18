@@ -33,16 +33,34 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
     tempPdfPath = path.join(os.tmpdir(), `invoice-${crypto.randomBytes(8).toString('hex')}.pdf`)
 
     // Resolve Python interpreter path cross-platform
-    let pythonPath = path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
-    if (!fs.existsSync(pythonPath)) {
-      pythonPath = path.join(process.cwd(), '.venv', 'bin', 'python')
-    }
-    if (!fs.existsSync(pythonPath)) {
-      pythonPath = 'python3' // Fallback to system python
+    // Try multiple possible locations for the virtual environment
+    const possibleVenvPaths = [
+      path.join(process.cwd(), '.venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), '.venv', 'bin', 'python'),
+      path.join(process.cwd(), 'server', '.venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), 'server', '.venv', 'bin', 'python'),
+    ]
+    let pythonPath = 'python3' // Default fallback
+    for (const venvPath of possibleVenvPaths) {
+      if (fs.existsSync(venvPath)) {
+        pythonPath = venvPath
+        break
+      }
     }
 
-    // Resolve Python script path - works in both dev and production
-    const scriptPath = path.join(process.cwd(), 'src', 'invoice_generator.py')
+    // Resolve Python script path - try multiple possible locations
+    const possibleScriptPaths = [
+      path.join(process.cwd(), 'server', 'src', 'invoice_generator.py'),
+      path.join(process.cwd(), 'src', 'invoice_generator.py'),
+      path.join(__dirname, '..', 'invoice_generator.py'),
+    ]
+    let scriptPath = possibleScriptPaths[0]
+    for (const script of possibleScriptPaths) {
+      if (fs.existsSync(script)) {
+        scriptPath = script
+        break
+      }
+    }
 
     // Spawn Python script to generate invoice PDF
     const py = spawn(pythonPath, [scriptPath, tempPdfPath])
