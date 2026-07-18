@@ -1,0 +1,25 @@
+# Don't ignore Dockerfile
+# !Dockerfile
+
+# Ignore node modules
+node_modules/
+server/node_modules/
+
+# Ignore local env files
+.env
+.env.*
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore git
+.git/
+
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
