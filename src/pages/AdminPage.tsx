@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, downloadInvoice, type Location, type Shipment, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
+import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateTrackingEvent, deleteTrackingEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, downloadInvoice, type Location, type Shipment, type TrackingEvent, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
 import StatusBadge from '@/components/StatusBadge'
 import ModeIcon from '@/components/ModeIcon'
 
@@ -21,6 +21,10 @@ export default function AdminPage() {
   })
   const [newEvent, setNewEvent] = useState({
     shipmentId: '', status: 'IN_TRANSIT' as ShipmentStatus, location: '', note: '', timestamp: new Date().toISOString().slice(0, 16)
+  })
+  const [editingEvent, setEditingEvent] = useState<TrackingEvent | null>(null)
+  const [eventEditForm, setEventEditForm] = useState({
+    status: 'IN_TRANSIT' as ShipmentStatus, location: '', note: '', timestamp: ''
   })
   const [createdShipment, setCreatedShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,6 +91,44 @@ export default function AdminPage() {
       setTimeout(() => setSuccess(''), 4000)
     } catch (err) {
       setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to add event'}`)
+    }
+  }
+
+  function openEventEditor(event: TrackingEvent) {
+    setEditingEvent(event)
+    setEventEditForm({
+      status: event.status,
+      location: event.location,
+      note: event.note || '',
+      timestamp: event.timestamp.slice(0, 16),
+    })
+  }
+
+  async function handleUpdateEvent(e: FormEvent) {
+    e.preventDefault()
+    if (!editingEvent || !newEvent.shipmentId) return
+    try {
+      await updateTrackingEvent(newEvent.shipmentId, editingEvent.id, {
+        ...eventEditForm,
+        timestamp: new Date(eventEditForm.timestamp).toISOString(),
+      })
+      setEditingEvent(null)
+      setSuccess('Tracking event updated successfully!')
+      setTimeout(() => setSuccess(''), 4000)
+    } catch (err) {
+      setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to update event'}`)
+    }
+  }
+
+  async function handleDeleteEvent(event: TrackingEvent) {
+    if (!newEvent.shipmentId || !confirm(`Delete the ${event.location} checkpoint?`)) return
+    try {
+      await deleteTrackingEvent(newEvent.shipmentId, event.id)
+      if (editingEvent?.id === event.id) setEditingEvent(null)
+      setSuccess('Tracking event deleted successfully!')
+      setTimeout(() => setSuccess(''), 4000)
+    } catch (err) {
+      setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to delete event'}`)
     }
   }
 
@@ -390,6 +432,7 @@ export default function AdminPage() {
 
         {/* Add Tracking Event */}
         {tab === 'event' && (
+          <div className="space-y-5">
           <form onSubmit={handleAddEvent} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
             <h2 className="font-display text-2xl font-bold text-navy">Add Tracking Event</h2>
             <p className="text-slate-500 text-sm -mt-3">Updates shipment status and adds a timeline entry.</p>
@@ -451,12 +494,64 @@ export default function AdminPage() {
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Timestamp *</label>
               <input type="datetime-local" required value={newEvent.timestamp} onChange={e => setNewEvent(p => ({ ...p, timestamp: e.target.value }))}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base bg-white focus:outline-none focus:ring-2 focus:ring-sky" />
+              <p className="text-xs text-slate-400 mt-1.5">Use a time later than the previous checkpoint to keep the route in journey order.</p>
             </div>
 
             <button type="submit" className="w-full bg-navy hover:bg-navy-mid text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-sm">
               Add Tracking Event
             </button>
           </form>
+
+          {newEvent.shipmentId && (() => {
+            const selectedShipment = shipments.find(shipment => shipment.id === newEvent.shipmentId)
+            const events = [...(selectedShipment?.events || [])].sort(
+              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+            )
+            return (
+              <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h2 className="font-display text-2xl font-bold text-navy">Manage Tracking History</h2>
+                <p className="text-slate-500 text-sm mt-1 mb-4">Correct a location or timestamp, or remove an incorrect checkpoint.</p>
+                <div className="space-y-3">
+                  {events.map(event => (
+                    <div key={event.id} className="rounded-xl border border-slate-100 p-4">
+                      {editingEvent?.id === event.id ? (
+                        <form onSubmit={handleUpdateEvent} className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <select value={eventEditForm.status} onChange={e => setEventEditForm(form => ({ ...form, status: e.target.value as ShipmentStatus }))}
+                              className="px-3 py-2 rounded-lg border border-slate-200 text-sm">
+                              {ALL_STATUSES.map(status => <option key={status} value={status}>{STATUS_DISPLAY[status]}</option>)}
+                            </select>
+                            <input required value={eventEditForm.location} onChange={e => setEventEditForm(form => ({ ...form, location: e.target.value }))}
+                              className="px-3 py-2 rounded-lg border border-slate-200 text-sm" aria-label="Event location" />
+                            <input required type="datetime-local" value={eventEditForm.timestamp} onChange={e => setEventEditForm(form => ({ ...form, timestamp: e.target.value }))}
+                              className="px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+                            <input value={eventEditForm.note} onChange={e => setEventEditForm(form => ({ ...form, note: e.target.value }))}
+                              placeholder="Optional note" className="px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+                          </div>
+                          <div className="flex gap-3">
+                            <button className="text-sm font-semibold text-sky">Save checkpoint</button>
+                            <button type="button" onClick={() => setEditingEvent(null)} className="text-sm font-semibold text-slate-500">Cancel</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2"><StatusBadge status={event.status} /><span className="font-semibold text-navy text-sm">{event.location}</span></div>
+                            <p className="text-xs text-slate-400 mt-1">{new Date(event.timestamp).toLocaleString()}</p>
+                          </div>
+                          <div className="flex gap-3 text-sm font-semibold">
+                            <button type="button" onClick={() => openEventEditor(event)} className="text-sky">Edit</button>
+                            <button type="button" onClick={() => handleDeleteEvent(event)} className="text-red-600">Delete</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )
+          })()}
+          </div>
         )}
 
         {/* Create Customer */}

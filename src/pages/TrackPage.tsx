@@ -43,7 +43,11 @@ export default function TrackPage() {
 
   const currentStep = shipment ? statusOrder.indexOf(shipment.status) : -1
 
-  const events: TrackingEvent[] = shipment?.events || []
+  // The API returns events oldest first. Sorting here too keeps the public
+  // timeline reliable if that order ever changes upstream.
+  const events: TrackingEvent[] = [...(shipment?.events || [])].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  )
 
   return (
     <div className="min-h-screen bg-slate py-8 px-4 sm:px-6">
@@ -179,7 +183,7 @@ export default function TrackPage() {
               <h3 className="font-display text-xl font-bold text-navy mb-5">Tracking History</h3>
               {events.length === 0 && <p className="text-slate-400 text-sm">No tracking events yet.</p>}
               <div className="space-y-0">
-                {[...events].reverse().map((evt, i) => {
+                {events.map((evt, i) => {
                   const m = STATUS_META[evt.status]
                   const isFirst = i === 0
                   return (

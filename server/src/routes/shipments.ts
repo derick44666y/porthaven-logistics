@@ -96,7 +96,6 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         include: {
           events: {
             orderBy: { timestamp: 'asc' },
-            take: 1,
           },
         },
       })
@@ -205,6 +204,21 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
       return
     }
 
+    // A tracking history represents one forward-moving journey. Reject
+    // back-dated checkpoints so a later entry cannot make the route appear
+    // to jump backwards to an earlier country.
+    const latestEvent = await prisma.trackingEvent.findFirst({
+      where: { shipmentId: id },
+      orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+    })
+    const eventTimestamp = body.timestamp || new Date()
+    if (latestEvent && eventTimestamp <= latestEvent.timestamp) {
+      res.status(409).json({
+        error: `Event time must be later than the latest checkpoint (${latestEvent.timestamp.toISOString()}).`,
+      })
+      return
+    }
+
     const statusChanged = shipment.status !== body.status
 
     const event = await prisma.trackingEvent.create({
@@ -213,7 +227,7 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
         status: body.status,
         location: body.location,
         note: body.note || '',
-        timestamp: body.timestamp || new Date(),
+        timestamp: eventTimestamp,
       },
     })
 
@@ -241,6 +255,88 @@ router.post('/:id/events', authMiddleware, adminMiddleware, async (req: Request,
     res.status(201).json({ event })
   } catch (err) {
     console.error('Add event error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// PUT /shipments/:shipmentId/events/:eventId — admin only
+router.put('/:shipmentId/events/:eventId', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { shipmentId, eventId } = req.params
+    const body = parseBody(createEventSchema, req.body, res)
+    if (!body) return
+
+    const event = await prisma.trackingEvent.findFirst({ where: { id: eventId, shipmentId } })
+    if (!event) {
+      res.status(404).json({ error: 'Tracking event not found' })
+      return
+    }
+
+    const timestamp = body.timestamp || event.timestamp
+    const [previousEvent, nextEvent] = await Promise.all([
+      prisma.trackingEvent.findFirst({
+        where: { shipmentId, id: { not: eventId }, timestamp: { lt: timestamp } },
+        orderBy: { timestamp: 'desc' },
+      }),
+      prisma.trackingEvent.findFirst({
+        where: { shipmentId, id: { not: eventId }, timestamp: { gt: timestamp } },
+        orderBy: { timestamp: 'asc' },
+      }),
+    ])
+
+    // Reject a duplicate timestamp as well as any attempt to place an event
+    // outside the route's chronological sequence.
+    const sameTimeEvent = await prisma.trackingEvent.findFirst({
+      where: { shipmentId, id: { not: eventId }, timestamp },
+    })
+    if (sameTimeEvent || (previousEvent && timestamp <= previousEvent.timestamp) || (nextEvent && timestamp >= nextEvent.timestamp)) {
+      res.status(409).json({ error: 'Event time must be unique and remain between its neighboring checkpoints.' })
+      return
+    }
+
+    const updatedEvent = await prisma.trackingEvent.update({
+      where: { id: eventId },
+      data: { status: body.status, location: body.location, note: body.note || '', timestamp },
+    })
+
+    const latestEvent = await prisma.trackingEvent.findFirst({
+      where: { shipmentId },
+      orderBy: { timestamp: 'desc' },
+    })
+    if (latestEvent) {
+      await prisma.shipment.update({ where: { id: shipmentId }, data: { status: latestEvent.status } })
+    }
+
+    res.json({ event: updatedEvent })
+  } catch (err) {
+    console.error('Update tracking event error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// DELETE /shipments/:shipmentId/events/:eventId — admin only
+router.delete('/:shipmentId/events/:eventId', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { shipmentId, eventId } = req.params
+    const event = await prisma.trackingEvent.findFirst({ where: { id: eventId, shipmentId } })
+    if (!event) {
+      res.status(404).json({ error: 'Tracking event not found' })
+      return
+    }
+
+    await prisma.trackingEvent.delete({ where: { id: eventId } })
+    const latestEvent = await prisma.trackingEvent.findFirst({
+      where: { shipmentId },
+      orderBy: { timestamp: 'desc' },
+    })
+    await prisma.shipment.update({
+      where: { id: shipmentId },
+      data: { status: latestEvent?.status || 'ORDER_CREATED' },
+    })
+
+    res.json({ message: 'Tracking event deleted' })
+  } catch (err) {
+    console.error('Delete tracking event error:', err)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

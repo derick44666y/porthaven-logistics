@@ -180,6 +180,19 @@ export async function addTrackingEvent(shipmentId: string, data: {
   return request<{ event: TrackingEvent }>('POST', `/shipments/${shipmentId}/events`, data, true)
 }
 
+export async function updateTrackingEvent(shipmentId: string, eventId: string, data: {
+  status: ShipmentStatus
+  location: string
+  note?: string
+  timestamp: string
+}): Promise<{ event: TrackingEvent }> {
+  return request<{ event: TrackingEvent }>('PUT', `/shipments/${shipmentId}/events/${eventId}`, data, true)
+}
+
+export async function deleteTrackingEvent(shipmentId: string, eventId: string): Promise<{ message: string }> {
+  return request<{ message: string }>('DELETE', `/shipments/${shipmentId}/events/${eventId}`, undefined, true)
+}
+
 export async function linkShipment(shipmentId: string): Promise<{ shipment: Shipment }> {
   return request<{ shipment: Shipment }>('PUT', `/shipments/${shipmentId}/link`, undefined, true)
 }
