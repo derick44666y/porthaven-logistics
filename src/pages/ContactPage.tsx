@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { submitContactForm } from '@/api'
 
 export default function ContactPage() {
@@ -7,6 +7,10 @@ export default function ContactPage() {
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    document.title = 'Contact PortHaven Logistics | Best Shipping Company in Syria — Get a Quote'
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -27,7 +31,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-slate py-12 px-5 md:px-6">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-10"><h1 className="font-display text-4xl md:text-5xl font-bold text-navy mb-3">Get In Touch</h1><p className="text-slate-500 text-sm md:text-base">Reach out and we'll handle the rest.</p></div>
+        <div className="text-center mb-10"><h1 className="font-display text-4xl md:text-5xl font-bold text-navy mb-3">Contact the Best Shipping Company in Syria</h1><p className="text-slate-500 text-sm md:text-base">Get a quote for sea freight Latakia & Tartous, air freight, or customs clearance Syria. We reply fast.</p></div>
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8 space-y-4 mb-8">
           <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Name *</label><input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" /></div>
           <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">Email *</label><input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-sky" /></div>
