@@ -45,7 +45,7 @@ const COMPANY_DEFAULTS = {
   name: 'PortHaven Logistics',
   address: '123 Harbour Plaza, Suite 400, Los Angeles, CA 90012, USA',
   email: 'billing@porthavenlogistic.com',
-  phone: '+1 (800) 555-0142',
+  phone: '+1 (951) 589-6129',
   taxId: 'US-GBL-88420193',
   website: 'https://www.porthavenlogistic.com',
 }
