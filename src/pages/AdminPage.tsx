@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { getMyShipments, createShipment as apiCreateShipment, addTrackingEvent as apiAddEvent, updateTrackingEvent, deleteTrackingEvent, updateShipment, deleteShipment, searchLocations, createCustomerUser, downloadInvoice, type Location, type Shipment, type TrackingEvent, type ShipmentStatus, ALL_STATUSES, STATUS_META, STATUS_DISPLAY } from '@/api'
 import StatusBadge from '@/components/StatusBadge'
 import ModeIcon from '@/components/ModeIcon'
+import { downloadTrackingQr, getTrackingUrl } from '@/utils/qrcode'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
@@ -30,6 +31,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', password: '' })
   const [createdCustomer, setCreatedCustomer] = useState<{ email: string; password: string; name: string; emailSent?: boolean } | null>(null)
+  const [qrModal, setQrModal] = useState<{ trackingNumber: string; receiverName: string } | null>(null)
+  const [qrDownloading, setQrDownloading] = useState(false)
 
   // Location autocomplete
   const [locationSuggestions, setLocationSuggestions] = useState<Location[]>([])
@@ -192,6 +195,19 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDownloadQr(trackingNumber: string) {
+    setQrDownloading(true)
+    try {
+      await downloadTrackingQr(trackingNumber)
+      setSuccess(`QR code downloaded — QR-${trackingNumber}.png`)
+      setTimeout(() => setSuccess(''), 4000)
+    } catch (err) {
+      setSuccess(`Error: ${err instanceof Error ? err.message : 'Failed to download QR code'}`)
+    } finally {
+      setQrDownloading(false)
+    }
+  }
+
   function generateTempPassword() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
     let pwd = ''
@@ -255,7 +271,16 @@ export default function AdminPage() {
             <span>{success.startsWith('Error') ? '❌' : '✅'}</span>
             <span>{success.replace('Error: ', '')}</span>
             {createdShipment && (
-              <a href={`/track/${createdShipment.trackingNumber}`} className="ml-auto text-green-700 underline font-semibold">View →</a>
+              <span className="ml-auto flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setQrModal({ trackingNumber: createdShipment.trackingNumber, receiverName: createdShipment.receiverName })}
+                  className="text-violet-700 underline font-semibold"
+                >
+                  QR Code
+                </button>
+                <a href={`/track/${createdShipment.trackingNumber}`} className="text-green-700 underline font-semibold">View →</a>
+              </span>
             )}
           </div>
         )}
@@ -341,6 +366,13 @@ export default function AdminPage() {
                         className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 text-xs font-semibold transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Invoice
+                      </button>
+                      <button
+                        onClick={() => setQrModal({ trackingNumber: s.trackingNumber, receiverName: s.receiverName })}
+                        className="inline-flex items-center gap-1 text-violet-700 hover:text-violet-800 text-xs font-semibold transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                        QR Code
                       </button>
                       <button onClick={() => handleDeleteShipment(s.id)}
                         className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 text-xs font-semibold transition-colors">
@@ -686,6 +718,75 @@ export default function AdminPage() {
           </form>
         )}
       </div>
+
+      {/* QR Code modal — download & share with the receiver */}
+      {qrModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setQrModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-xl font-bold text-navy">Shipment QR Code</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  For <span className="font-semibold text-slate-700">{qrModal.receiverName}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQrModal(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(getTrackingUrl(qrModal.trackingNumber))}`}
+                alt={`QR code for ${qrModal.trackingNumber}`}
+                width={280}
+                height={280}
+                className="rounded-lg"
+              />
+            </div>
+
+            <div className="text-center">
+              <div className="font-mono text-sm font-bold text-navy">{qrModal.trackingNumber}</div>
+              <p className="text-xs text-slate-400 mt-1 break-all">
+                {getTrackingUrl(qrModal.trackingNumber)}
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-500 text-center">
+              When the receiver scans this QR code, they go straight to the public tracking page for this shipment.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={qrDownloading}
+                onClick={() => handleDownloadQr(qrModal.trackingNumber)}
+                className="flex-1 bg-violet-700 hover:bg-violet-800 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
+              >
+                {qrDownloading ? 'Downloading…' : 'Download PNG'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setQrModal(null)}
+                className="px-4 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
